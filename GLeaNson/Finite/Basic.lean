@@ -97,11 +97,53 @@ noncomputable def topOfJoinIrreducibleLowerSet {s : LowerSet P} (h_irred : SupIr
 -- since s is SupIrred, this union can only consist of a single set
 -- the element generating that single set must be the top of s.
 
-lemma topOfJILSisTop {s : LowerSet P} (h_irred : SupIrred s) : IsTop (topOfJoinIrreducibleLowerSet P h_irred) := sorry
+lemma topOfJILSisTop {s : LowerSet P} (h_irred : SupIrred s) :
+  IsTop (topOfJoinIrreducibleLowerSet P h_irred) := sorry
 
 -- NB most of the work above is in fact already done here:
-#check LowerSet.supIrred_iff_of_finite
+-- #check LowerSet.supIrred_iff_of_finite
+open LowerSet
 
+-- This is `LowerSet.erase_sup_Iic` with the assumption on `P` relaxed
+lemma foo1 (a : P) : SupIrred (LowerSet.Iic a) := by
+  refine' ⟨fun h ↦ Iic_ne_bot h.eq_bot, fun s t hst ↦ _⟩
+  have := mem_Iic_iff.2 (le_refl a)
+  rw [← hst] at this
+  exact this.imp (fun ha ↦ (le_sup_left.trans_eq hst).antisymm <| Iic_le.2 ha) fun ha ↦
+    (le_sup_right.trans_eq hst).antisymm <| Iic_le.2 ha
+
+-- This is `LowerSet.supIrred_iff_of_finite` with the assumption on `P` relaxed
+lemma bar (s : LowerSet P) : SupIrred s ↔ ∃ a, LowerSet.Iic a = s := by
+  refine' ⟨fun hs ↦ _, _⟩
+  · obtain ⟨a, ha, has⟩ := (s : Set P).toFinite.exists_maximal_wrt id _ (coe_nonempty.2 hs.ne_bot)
+    exact ⟨a, (hs.2 <| erase_sup_Iic ha <| by simpa [eq_comm] using has).resolve_left
+      (erase_lt.2 ha).ne⟩
+  · rintro ⟨a, rfl⟩
+    apply foo1
+
+def barUnique {s : LowerSet P} (hs : SupIrred s) : Unique {a // LowerSet.Iic a = s} where
+  default := sorry
+  uniq := sorry
+
+--with `def` the following would have bad reduction properties
+abbrev TopGuy {s : LowerSet P} (hs : SupIrred s) : P := (barUnique P hs).default.1
+
+lemma TopUnique {s : LowerSet P} (hs : SupIrred s) (x : {a // LowerSet.Iic a = s}) :
+  x = TopGuy P hs := by rw [(barUnique P hs).2 x]--probably there is some API for the `Unique` class that is nicers
+
+lemma TopUnique_prop {s : LowerSet P} (hs : SupIrred s) : (LowerSet.Iic (TopGuy P hs)) = s := by
+  rw [(barUnique P hs).default.2]
+
+
+def Equiv.supIrredLowerSet' : P ≃ {s : LowerSet P // SupIrred s} where
+  toFun := fun a ↦ ⟨LowerSet.Iic a, foo1 P a⟩
+  invFun := fun ⟨s, hs⟩ ↦ TopGuy P hs
+  left_inv := by
+    sorry
+  right_inv := by
+    intro ⟨s, hs⟩
+    simp only [Subtype.mk.injEq]
+    exact TopUnique_prop P hs
 
 -- TODO: Filippo will separate this into one definition for the equiv part and another for the order-iso part.
 -- The proposition is then the following:
