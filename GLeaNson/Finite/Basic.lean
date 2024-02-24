@@ -1,9 +1,6 @@
 import Mathlib.Order.Birkhoff
 import Mathlib.Order.GaloisConnection
 
-open LatticeHom Set
-
-set_option autoImplicit false
 
 /-%%
 In this file, we give a complete proof of Birkhoff Duality, that is:
@@ -16,10 +13,14 @@ Throughout the file, let $L$ be a finite distributive lattice,
 and $P$ a finite partial order.
 %%-/
 
+set_option autoImplicit false
+
 namespace LowerSet
-variable (L P : Type*)
-variable [DistribLattice L] [Fintype L]
+
+variable (P : Type*)
 variable [PartialOrder P] [Fintype P]
+
+open LatticeHom Set
 
 /-%%
 \begin{definition}\label{join-irreducible}\lean{SupIrred}
@@ -37,14 +38,11 @@ The set of join-irreducible elements of $L$ is a finite poset, when equipped wit
 partial order induced by the set of join-irreducible elements.
 %%-/
 
-example : PartialOrder {a : L // SupIrred a} := Subtype.partialOrder fun a ↦ SupIrred a
-
 /-%%
 The set of lower sets of $P$ is a finite distributive lattice, when equipped with the
 operations of union and intersection.
 %%-/
 
-example : DistribLattice (LowerSet P) := by infer_instance
 
 /-%%
 The dual equivalence, modulo a category-theoretic fact that is already in Mathlib (TODO: find it),
@@ -84,9 +82,6 @@ lemma supIrred_iff_of_finite' (s : LowerSet P) : SupIrred s ↔ ∃ a, LowerSet.
 lemma Iic_order_embedding {a b : P} : LowerSet.Iic a ≤ LowerSet.Iic b ↔ a ≤ b := by
   simp only [← lowerClosure_singleton, lowerClosure_le]
   simp only [lowerClosure_singleton, coe_Iic, singleton_subset_iff, mem_Iic]
-
-noncomputable example {Q : Type* } [Preorder Q] {f : P ↪o Q } (hf : Function.Surjective f.1) : OrderIso P Q :=
-  by exact RelIso.ofSurjective f hf
 
 -- why is this ' needed here??? mystery.
 -- TODO: this is the general form of Birkhoff's representation theorem, where P is only a finite poset, not necessarily a distributive lattice. (see line 160 in Mathlib/Order/Birkhoff.lean)
@@ -142,7 +137,8 @@ lemma TopUnique_prop {s : LowerSet P} (hs : SupIrred s) : (LowerSet.Iic (TopGuy 
 Second, the assignment is a full and faithful functor. We break this up in a number of steps. Throughout the argument, let $L$ and $M$ be finite distributive lattices, and $h : L \to M$ a homomorphism between them.
 %%-/
 
-variable (M : Type) [DistribLattice M] [Fintype M]
+variable (L M : Type) [DistribLattice M] [Fintype M]
+variable [DistribLattice L] [Fintype L]
 variable (h : LatticeHom L M)
 
 /-%%
