@@ -83,10 +83,27 @@ showing that the complement of $U_a$ is a (basic) open.
     \href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Connected/TotallyDisconnected.html#isTotallyDisconnected_of_isClopen_set}{
     a result that is in Mathlib already}, and it also clearly implies that the
     space is Hausdorff. It remains to prove that $\Spec(A)$ is compact. This is
-    where a weak form of axiom of choice must be used. An elegant way (but not
-    sure if this is easy in Mathlib) is to show that the set of homomorphisms
+    where a weak form of axiom of choice must be used. An elegant way 
+    is to show that the set of homomorphisms
     is closed as a subspace of $\mbf{2}^{|A|}$, and it is therefore compact,
-    since $\mbf{2}^{|A|}$ is compact by Tychonoff's Theorem. 
+    since $\mbf{2}^{|A|}$ is compact by Tychonoff's Theorem. In order to see
+    that $\Spec(A)$ is closed in $\mbf{2}^{|A|}$, notice that
+    \[ \Spec(A) = \bigcap_{a,b\in A} J_{a,b} \cap \bigcap_{a \in A} N_a \cap Z
+    \ , \]
+    where $J_{a,b} \isdef \{ x \in 2^A \ : \ x(a \vee b) = x(a) \vee x(b) \},$
+    $N_a \isdef  \{x \in 2^A \ : \ x(\neg a) = \neg x(a) \},$ $Z \isdef \{ x
+    \in 2^A \ : \ x(\zer) = \zer\}.$ Each of these sets is clopen because its
+    definition only depends on a finite number of coordinates of $x$. For example, to
+    spell this out a bit more,
+    for any $a, b \in A$,
+    \[ J_{a,b} = 
+        (\pi_{a \vee b}^{-1}(\zer) \cap \pi_{a}^{-1}(\zer) \cap
+        \pi_{b}^{-1}(\zer)) \cup (\pi_{a \vee b}^{-1}(\one) \cap
+    (\pi_a^{-1}(\one) \cup \pi_b^{-1}(\one))) \ , \]
+    where $\pi_c \colon \mbf{2}^A \to \mbf{2}$ is the projection onto the $c$
+    coordinate.
+
+
 
     Here is a more concrete proof. By a well-known fact of topology that is
     hopefully in Mathlib, it suffices to prove the finite subcovering property
