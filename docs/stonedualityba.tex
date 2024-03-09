@@ -7,10 +7,13 @@
 
 \begin{document}
 \maketitle
+
 The aim of this note is to give a detailed proof of Stone duality for Boolean
 algebras \cite{Sto1937BA} to facilitate its formalization in Mathlib. Note that
 Stone actually proved something more general for bounded distributive lattices
-\cite{Sto1937}.
+\cite{Sto1937}. (Below, I will cut everything into very small numbered lemmas
+and definitions which is not how I usually like to write math, but it seemed
+like it might be useful for organizing the formalization.)
 
 \section{Definitions and statement}
 I first recall some definitions from Mathlib. A subset $S$ of a topological
@@ -25,52 +28,151 @@ is sometimes called `Stone space' by other mathematicians.} The category
 $\BoolSp$ of Boolean spaces is the full subcategory of topological spaces based
 on Boolean spaces.
 
-A \emph{Boolean algebra} is, by definition a bounded distributive lattice with
+A \emph{Boolean algebra} is by definition a bounded distributive lattice with
 complements. This means that it is a structure of the form $(A, \vee, \wedge,
 \zer, \one, \neg)$ satisfying a number of axioms. We do not really care what
 the axioms are precisely. What is important to know is that, for any set $X$,
 the structure $(\mathcal{P}(X), \cup, \cap, \emptyset, X, (-)^{\c})$ is a
 Boolean algebra (I believe and hope that this is in Mathlib, if not, it should
-be.) A Boolean algebra \emph{homomorphism} is a structure-preserving function
-between Boolean algebras. In fact, to be a homomorphism, it suffices to
-preserve $\vee$, $\zer$, and $\neg$, because the operations $\one$ and $\wedge$
-are term-definable from those. In particular, for a subset $S$ of a Boolean
-algebra $A$ to be a subalgebra, it suffices for $S$ to contain $\zer$, and be
-closed under the operations $\vee$ and $\neg$. An \emph{embedding} of Boolean
-algebras is the same thing as an injective homomorphism.
+be.) In particular, I write $\mbf{2} = \{ \zer, \one \}$ for the unique
+two-element Boolean algebra; it can be seen that it is a Boolean algebra
+because it is the power set algebra of a singleton set. A Boolean algebra
+\emph{homomorphism} is a structure-preserving function between Boolean
+algebras. In fact, to be a homomorphism, it suffices to preserve $\vee$,
+$\zer$, and $\neg$, because the operations $\one$ and $\wedge$ are
+term-definable from those. In particular, for a subset $S$ of a Boolean algebra
+$A$ to be a subalgebra, it suffices for $S$ to contain $\zer$, and be closed
+under the operations $\vee$ and $\neg$. An \emph{embedding} of Boolean algebras
+is the same thing as an injective homomorphism. An \emph{ideal} of a Boolean
+algebra is a subset $I$ which contains $\zer$ and is such that $a \vee b \in I$
+if, and only if, both $a \in I$ and $b \in I$ (this is equivalent to the usual
+definition for rings but more convenient to work with). An ideal is
+\emph{proper} if it does not contain $\one$. The \emph{partial order} on a
+Boolean algebra $A$ can be defined by $a \leq b$ iff $a \vee b = b$, or
+equivalently  iff $a \wedge b = a$.
+
+We will need the following fundamental fact about Boolean algebras which is
+sometimes called the ultrafilter principle. It can be deduced from the
+ring-theoretic fact (probably in Mathlib) that any non-unit element of a ring
+is in some maximal ideal.
+\begin{lemma}\label{ultrafilterprinciple}
+    Let $A$ be a Boolean algebra. For any $a \in A \setminus \{\one\}$, 
+    there exists a homomorphism $x \colon A \to \mbf{2}$ such that $x(a) =
+    \zer$.
+\end{lemma}
+\begin{proof}
+    By Zorn's lemma, let $I$ be a maximal element of the set of proper ideals of $A$
+    which contain $a$. Define $x(b) = \zer$ iff $b \in I$. Clearly, $x(a) =
+    \zer$; we need to check that $x$ is a homomorphism. 
+The equalities $x(\zer) = \zer$ and $x(b \vee b') = x(b) \vee x(b')$ are
+    easy to check from the defining properties of an ideal. To see that $x(\neg
+    b) = \neg x(b)$ for any $b \in A$, the crucial observation is that if $b
+    \not\in I$ and $\neg b \not\in I$, then it is possible to enlarge $I$ by
+    adding $b$ to it, while staying proper. By maximality of $I$ this is
+    impossible.  We thus get that, for any $b \in A$, one of $b$ and $\neg b$
+    must be in $I$, and they can never be both in $I$, since that would give
+    $\one = b \vee \neg b$ in $I$, contradicting that $I$ is proper. It now
+    follows from the definitions that $x(\neg b) = \neg x(b)$.
+\end{proof}
+The statement we want to prove is the following:
+\begin{theorem}\label{BABoolSpdualeq}
+    The categories $\BoolAlg$ and $\BoolSp$ are dually equivalent.
+\end{theorem}
+It will also be useful and interesting to actually have concrete definitions of
+the dual equivalence functors both ways, so we do that first.
+\begin{remark}
+An alternative proof that is shorter on paper but does not give explicit access
+to the definition of the dual equivalence functors would be to use the
+fact, which is 
+\href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Equivalence.html#CategoryTheory.Equivalence.ofFullyFaithfullyEssSurj}{already
+in Mathlib}, that any fully faithful essentially surjective functor is part
+of an equivalence. However, the inverse part of the equivalence that is
+produced by that fact only exists thanks to an application of choice, and it
+seems like it would be hard to work with. But I could be wrong about this, and
+implementing this road towards the proof might be an interesting alternative experiment. It
+has the advantage of avoiding having to get into the weeds of natural
+transformation arguments as I will need to do below.
+\end{remark}
 
 \section{The functors}
-We define the two functors that make up Stone duality.
+We define the two functors that make up Stone duality for Boolean algebras.
 
 \subsection{From spaces to algebras}
 If $X$ is a Boolean space, write $\Clp(X)$ for the set of clopen
-subsets of $X$. This is a subalgebra of the Boolean algebra $\mathcal{P}(X)$, since
-finite unions and complements of clopen sets are clopen, and the empty set is
-clopen; thus, $\Clp(X)$ is again a Boolean algebra. If $f \colon X \to Y$ is a
-continuous function, then $f^{-1} \colon \Clp(Y) \to \Clp(X)$ is a Boolean
-algebra homomorphism: indeed, $f^{-1}(\emptyset) = \emptyset$, $f^{-1}(K^\c) =
-f^{-1}(K)^\c$, and $f^{-1}(K_1 \cup K_2) = f^{-1}(K_1) \cup f^{-1}(K_2)$. This
-assignment is a contravariant functor because $\ms{id}_X^{-1}(K) = K$ and $(f
-\circ g)^{-1}(K) = g^{-1}(f^{-1}(K))$. One sometimes writes $\Clp(f)$ for
+subsets of $X$. 
+
+\begin{proposition}\label{clpwelldef}
+    $\Clp(X)$ is a Boolean subalgebra of the Boolean algebra $\mathcal{P}(X)$.
+\end{proposition}
+\begin{proof}
+Finite unions and complements of clopen sets are clopen, and the empty set is
+clopen.
+\end{proof} 
+\begin{proposition}\label{clpmorphism}
+    If $f \colon X \to Y$ is a
+continuous function between Boolean spaces, then $f^{-1} \colon \Clp(Y) \to \Clp(X)$ is a Boolean
+algebra homomorphism.
+\end{proposition}
+\begin{proof}
+    $f^{-1}(\emptyset) = \emptyset$, $f^{-1}(K^\c) =
+f^{-1}(K)^\c$, and $f^{-1}(K_1 \cup K_2) = f^{-1}(K_1) \cup f^{-1}(K_2)$ for
+any clopens $K, K_1, K_2$ of $Y$. 
+\end{proof}
+One sometimes writes $\Clp(f)$ for
 $f^{-1}$ but the notation is a bit heavy.
 
+\begin{proposition}
+    The assignments $X \mapsto \Clp(X)$ and $f \mapsto f^{-1}$ give a
+contravariant functor $\BoolSp \to \BoolAlg$.
+\end{proposition}
+\begin{proof}
+    The assignments are well-defined by \cref{clpwelldef} and
+    \cref{clpmorphism}.
+It is a contravariant functor because $\ms{id}_X^{-1}(K) = K$ and $(f
+\circ g)^{-1}(K) = g^{-1}(f^{-1}(K))$ for any clopen $K$.
+\end{proof}
+
 \subsection{From algebras to spaces}
-Let me write $\mbf{2} = \{ \zer, \one \}$ for the unique two-element Boolean
-algebra; it can be seen as  an instance of the powerset algebra mentioned
-above, where $X$ is a one-element set. If $A$ is a Boolean algebra, write
-$\Spec(A)$ for the set of homomorphisms from $A$ to the Boolean algebra on two
-elements. We equip $\Spec(A)$ with the topology generated by the basis
-$(U_a)_{a \in A}$, where, for each $a \in A$, we define
+If $A$ is a Boolean algebra, write
+$\Spec(A)$ for the set of homomorphisms from $A$ to $\mbf{2}$. 
+We equip $\Spec(A)$ with the subspace topology induced by the $|A|$-fold power
+$\mbf{2}^{A}$, where $\mbf{2}$ has the discrete topology.
+Define, for any $a \in A$,
 \[ U_a \isdef \{ x \in \Spec(A) \ \mid \ x(a) = \one \} \ . \]
-Note that each $U_a$ is clopen in the resulting topology on $\Spec(A)$. 
-Also note that an equivalent way of defining this topology on $\Spec(A)$ is by
-saying that it is the subspace topology induced by the $|A|$-fold power of the
-discrete space $\mbf{2}$. 
-Indeed,
-we have 
-\[ x \in (U_a)^\c \iff x(a) \neq \one \iff x(a) = \zer \iff x(\neg a) = \one
-\iff x \in U_{\neg a} \ , \]
-showing that the complement of $U_a$ is a (basic) open.
+
+\begin{lemma}\label{Uacomp}
+    For any $a \in A$, the complement of $U_a$ is equal to $U_{\neg a}$.
+\end{lemma}
+\begin{proof}
+Note that 
+$x \in (U_a)^\c \iff x(a) \neq \one \iff x(a) = \zer \iff x(\neg a) =
+\one \iff x \in U_{\neg a} \ .$ 
+\end{proof}
+\begin{lemma}\label{Uaclp}
+    For any $a \in A$, the set $U_a$ is clopen in $\Spec(A)$.
+\end{lemma}
+\begin{proof}
+    For any $a \in A$, the set $U_a$ is open because it is $\pi_a^{-1}(\one)$ where $\pi_a$
+    denotes the restriction of the projection function from $\Spec(A)$ to
+    $\mbf{2}$ on the coordinate $a$, and this projection function is continuous
+    by the definitions of product and subspace topology. The set $U_a$ is
+    closed because its complement is equal to $U_{\neg a}$, which we already
+    showed is open.
+\end{proof}
+\begin{proposition}\label{Specbasis}
+The topology on $\Spec(A)$ is generated by the basis
+$(U_a)_{a \in A}$ of clopen sets. 
+\end{proposition}
+\begin{proof}
+    In general, the topology on a product $\prod_{i\in I} X_i$ is generated by
+    the sets $\pi_i^{-1}(U)$ where $i \in I$ and $U \subseteq X_i$ ranges over
+    a basis for the open sets of $X_i$. Now in the case of $\mbf{2}^A$, this
+    implies that the topology has as a basis the sets $\pi_a^{-1}(\zer)$ and
+    $\pi_a^{-1}(\one)$, as $a$ ranges over the elements of $A$. But
+    \cref{Uacomp} gives that $\pi_a^{-1}(\zer) = \pi_{\neg a}^{-1}(\one)$, so
+    it actually suffices to take the sets $U_a = \pi_a^{-1}(\one)$ as $a$
+    ranges over the elements of $A$.
+\end{proof}
 \begin{theorem}
     The topological space $\Spec(A)$ is a Boolean space.
 \end{theorem}
@@ -83,16 +185,16 @@ showing that the complement of $U_a$ is a (basic) open.
     \href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Connected/TotallyDisconnected.html#isTotallyDisconnected_of_isClopen_set}{
     a result that is in Mathlib already}, and it also clearly implies that the
     space is Hausdorff. It remains to prove that $\Spec(A)$ is compact. This is
-    where a weak form of axiom of choice must be used. An elegant way 
-    is to show that the set of homomorphisms
+    where a weak form of axiom of choice must be used. 
+    We show that the set of homomorphisms
     is closed as a subspace of $\mbf{2}^{|A|}$, and it is therefore compact,
     since $\mbf{2}^{|A|}$ is compact by Tychonoff's Theorem. In order to see
     that $\Spec(A)$ is closed in $\mbf{2}^{|A|}$, notice that
     \[ \Spec(A) = \bigcap_{a,b\in A} J_{a,b} \cap \bigcap_{a \in A} N_a \cap Z
     \ , \]
-    where $J_{a,b} \isdef \{ x \in 2^A \ : \ x(a \vee b) = x(a) \vee x(b) \},$
-    $N_a \isdef  \{x \in 2^A \ : \ x(\neg a) = \neg x(a) \},$ $Z \isdef \{ x
-    \in 2^A \ : \ x(\zer) = \zer\}.$ Each of these sets is clopen because its
+    where $J_{a,b} \isdef \{ x \in \mbf{2}^A \ : \ x(a \vee b) = x(a) \vee x(b) \},$
+    $N_a \isdef  \{x \in \mbf{2}^A \ : \ x(\neg a) = \neg x(a) \},$ $Z \isdef \{ x
+    \in \mbf{2}^A \ : \ x(\zer) = \zer\}.$ Each of these sets is clopen because its
     definition only depends on a finite number of coordinates of $x$. For example, to
     spell this out a bit more,
     for any $a, b \in A$,
@@ -101,11 +203,9 @@ showing that the complement of $U_a$ is a (basic) open.
         \pi_{b}^{-1}(\zer)) \cup (\pi_{a \vee b}^{-1}(\one) \cap
     (\pi_a^{-1}(\one) \cup \pi_b^{-1}(\one))) \ , \]
     where $\pi_c \colon \mbf{2}^A \to \mbf{2}$ is the projection onto the $c$
-    coordinate.
+    coordinate.\qedhere
 
-
-
-    Here is a more concrete proof. By a well-known fact of topology that is
+    \old{Here is a more concrete proof. By a well-known fact of topology that is
     hopefully in Mathlib, it suffices to prove the finite subcovering property
     with respect to the basis.  Let $T \subseteq A$ be a collection of elements
     with the property that $\bigcup_{a \in T} U_a = \Spec(A)$. Let $I$ be the
@@ -132,22 +232,104 @@ showing that the complement of $U_a$ is a (basic) open.
     contradicting the maximality of $J$. Thus, we must have $x(\neg a) = \zer$.
     Finally, if $x(a) = \zer$, then $a \in J$, and we cannot also have $\neg a
     \in J$, because that would imply $\one = a \vee \neg a$ is in $J$ as well,
-    contradiction. Thus, $x(\neg a) = \one$.
+contradiction. Thus, $x(\neg a) = \one$.}
 \end{proof}
-Given a homomorphism $f \colon A \to B$ we can now define $f_* \colon \Spec(B) \to \Spec(A)$
+\begin{definition}
+    Given a homomorphism $f \colon A \to B$ we define $f_* \colon \Spec(B) \to \Spec(A)$
 as the map that sends $y \colon B \to \mbf{2}$ to $y \circ f \colon A \to
-\mbf{2}$. It is the composition of two homomorphisms, so it is again a
-homomorphism. It is also continuous, because for any $a \in A$ and $y \in
+\mbf{2}$. 
+\end{definition}
+This is well-defined: Since $y \circ f$ is the composition of two homomorphisms, it is again a
+homomorphism, showing that $f_*$ is a well-defined function. 
+
+\begin{proposition}
+    For any Boolean
+    algebra homomorphism $f \colon A \to B$, $f_* \colon \Spec(B) \to \Spec(A)$
+    is a continuous function.
+\end{proposition}
+\begin{proof}
+    For any $a \in A$ and $y \in
 \Spec(B)$, we have
 \[ y \in f_*^{-1}(U_a) \iff f_*(y) \in U_a \iff y(f(a)) = \one \iff y \in
 U_{f(a)}\ , \]
 so that the inverse image $f_*^{-1}(U_a)$ of any basic open set is again a
 (basic) open.
-Thus, this assignment is well-defined, and one can now check that $f \mapsto
-f_*$ is a contravariant functor. One sometimes writes $\Spec f$ for $f_*$ but
+\end{proof}
+
+\begin{proposition}
+    The assignment $f \mapsto f_*$ is contravariant functorial from $\BoolAlg$
+    to $\BoolSp$. 
+\end{proposition}
+\begin{proof}
+    If $f \colon A \to B$ and $g \colon B
+\to C$ then for any $y \in \Spec(C)$,
+\[ (\id_C)_*(y) = y \circ \id_C = y, \quad (g \circ f)_*(y) = y \circ g \circ f =
+f_*(g_*(y)) \ . \qedhere \]
+\end{proof}
+
+One sometimes writes $\Spec f$ for $f_*$ but
 the notation is a bit heavy.
 
 \section{The equivalence}
+\begin{lemma}\label{etahom}
+    For any $a, b \in A$ we have $U_a \cup U_b = U_{a \vee b}$, and moreover
+    $U_{\zer} = \emptyset$.
+\end{lemma}
+\begin{proof}
+    For any $x \in \Spec(A)$, we have 
+    \[ x(a \vee b)= \one \iff x(a) \vee x(b) = \one \iff x(a) = \one \text{ or
+    } x(b) = \one \ . \]
+    This shows that $U_a \cup U_b = U_{a \vee b}$. To see that $U_{\zer} =
+    \emptyset$ just notice that $x(\zer) = \zer \neq \one$.
+\end{proof}
+\begin{definition}
+Let $A$ be a Boolean algebra. We write $\eta_A$ for the Boolean homomorphism
+that sends $a \in A$ to $U_a \in \Clp(\Spec(A))$.
+\end{definition}
+It is indeed a homomorphism by \cref{Uacomp} and \cref{etahom}.
+\begin{proposition}
+The homomorphism $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
+\end{proposition}
+\begin{proof}
+    The homomorphism $\eta_A$ is injective: 
+    \cref{ultrafilterprinciple} gives that if $U_a = \Spec(A)$ then 
+    $a = 1$. Now if $a \neq b$ then $(\neg a \wedge b) \vee (\neg b \wedge a)
+    \neq 1$ from which one gets that $\eta(a) \neq \eta(b)$ (this is the
+    Boolean algebra version of the usual argument that a ring homomorphism is
+    injective if it has zero kernel). 
+\end{proof}
+
+\begin{definition}
+    Let $X$ be a Boolean space. We write $\epsilon_X$ for the 
+    function $X \to \Spec (\Clp(X))$ that sends $x \in X$ to the homomorphism
+    $\epsilon_X(x) \colon \Clp(X) \to \mbf{2}$ defined by sending any $K \in \Clp(X)$ to $\one$ if $x \in K$,
+    and to $\zer$ otherwise.
+\end{definition}
+\begin{lemma}\label{epseq}
+    Let $X$ be a Boolean space. For any $K \in \Clp(X)$, we have
+    $\epsilon_X^{-1}(U_K) = K$.
+\end{lemma}
+\begin{proof}
+    Note that, for any $x \in X$,
+    \[ x \in \epsilon_X^{-1}(U_K) \iff \epsilon_X(x) \in U_K \iff
+    \epsilon_X(x)(K) = \one \iff x \in K \ . \qedhere \] 
+\end{proof}
+\begin{proposition}
+    The function $\epsilon_X$ is continuous for any Boolean space $X$.
+\end{proposition}
+\begin{proof}
+    By \cref{Specbasis} and a general fact about continuous functions, it
+    suffices to check that $\epsilon_X^{-1}(U_K)$ is open for every $K \in
+    \Clp(X)$.  But this set is equal to $K$ by \cref{epseq}, and thus open.
+\end{proof}
+
+%\begin{proposition}
+%    The functor $\Spec$ is full.
+%\end{proposition}
+
+%\begin{proposition}
+%    The functor $\Spec$ is faithful.
+%\end{proposition}
 
 % \section{Characterization of Boolean spaces}
 % The following equivalent definition of Boolean spaces is more convenient, and
