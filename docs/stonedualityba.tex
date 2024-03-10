@@ -7,6 +7,13 @@
 
 \numberwithin{theorem}{section}
 
+% syntax: \docref{page}{declaration}{link text}
+\newcommand{\docref}[3]{
+    \href{
+        https://leanprover-community.github.io/mathlib4_docs/Mathlib/#1.html\##2
+    }{#3}
+}
+
 \begin{document}
 \maketitle
 
@@ -35,39 +42,39 @@ complements. This means that it is a structure of the form $(A, \vee, \wedge,
 \zer, \one, \neg)$ satisfying a number of axioms. We do not really care what
 the axioms are precisely. What is important to know is that, for any set $X$,
 the structure $(\mathcal{P}(X), \cup, \cap, \emptyset, X, (-)^{\c})$
-\href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Set/Basic.html#Set.instBooleanAlgebraSet}{is
-a Boolean algebra}. In particular, I write $\mbf{2} = \{ \zer, \one \}$ for the
-unique two-element Boolean algebra; it can be seen that it is a Boolean algebra
-because it is the power set algebra of a singleton set. A Boolean algebra
-\emph{homomorphism} is a structure-preserving function between Boolean
-algebras. In fact, to be a homomorphism, it suffices to preserve $\vee$,
-$\zer$, and $\neg$, because the operations $\one$ and $\wedge$ are
-term-definable from those. In particular, for a subset $S$ of a Boolean algebra
-$A$ to be a subalgebra, it suffices for $S$ to contain $\zer$, and be closed
-under the operations $\vee$ and $\neg$. An \emph{ideal} of a Boolean algebra is
-a subset $I$ which contains $\zer$ and is such that $a \vee b \in I$ if, and
-only if, both $a \in I$ and $b \in I$ (this is equivalent to the usual
-definition for rings but formulated in a more convenient way for Boolean
-algebras). An ideal is \emph{proper} if it does not contain $\one$. The
-\emph{partial order} on a Boolean algebra $A$ can be defined by $a \leq b$ iff
-$a \vee b = b$, or equivalently  iff $a \wedge b = a$. Our aim is to prove:
+\docref{Data/Set/Basic}{Set.instBooleanAlgebraSet}{is a Boolean algebra}.
+In particular, I write $\mbf{2} = \{ \zer, \one \}$ for the unique two-element
+Boolean algebra; it can be seen that it is a Boolean algebra because it is the
+power set algebra of a singleton set. A Boolean algebra \emph{homomorphism} is
+a structure-preserving function between Boolean algebras. In fact, to be a
+homomorphism, it suffices to preserve $\vee$, $\zer$, and $\neg$, because the
+operations $\one$ and $\wedge$ are term-definable from those. In particular,
+for a subset $S$ of a Boolean algebra $A$ to be a subalgebra, it suffices for
+$S$ to contain $\zer$, and be closed under the operations $\vee$ and $\neg$. An
+\emph{ideal} of a Boolean algebra is a subset $I$ which contains $\zer$ and is
+such that $a \vee b \in I$ if, and only if, both $a \in I$ and $b \in I$ (this
+is equivalent to the usual definition for rings but formulated in a more
+convenient way for Boolean algebras). An ideal is \emph{proper} if it does not
+contain $\one$. The \emph{partial order} on a Boolean algebra $A$ can be
+defined by $a \leq b$ iff $a \vee b = b$, or equivalently  iff $a \wedge b =
+a$. Our aim is to prove:
 \begin{theorem}\label{BABoolSpdualeq} The categories $\BoolAlg$ and $\BoolSp$
     are dually equivalent.
 \end{theorem}
 It will also be useful and interesting to actually have concrete definitions of
 the dual equivalence functors both ways, as we will do below. 
 \begin{remark}
-An alternative proof, which is shorter on paper but does not give explicit access
-to the definition of the dual equivalence functors, would be to use the
-fact that any fully faithful essentially surjective functor is part
-of an equivalence (this is  
-\href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Equivalence.html#CategoryTheory.Equivalence.ofFullyFaithfullyEssSurj}{
-in Mathlib}). However, the inverse part of the equivalence that is
-produced by that fact only exists thanks to an application of axiom of choice, and it
-seems like it would be hard to work with. I could of course be wrong about this, and
-implementing this road towards the proof might be an interesting alternative experiment. It
-may have the advantage of avoiding getting into the weeds of natural
-transformation arguments as I need to do in \cref{etanat,epsilonnat,triangle} below.
+An alternative proof, which is shorter on paper but does not give explicit
+access to the definition of the dual equivalence functors, would be to use the
+fact that any fully faithful essentially surjective functor is part of an
+equivalence (this is \docref{CategoryTheory/Equivalence}
+{CategoryTheory.Equivalence.ofFullyFaithfullyEssSurj}{in Mathlib}). However,
+the inverse part of the equivalence that is produced by that fact only exists
+thanks to an application of axiom of choice, and it seems like it would be hard
+to work with. I could of course be wrong about this, and implementing this road
+towards the proof might be an interesting alternative experiment. It may have
+the advantage of avoiding getting into the weeds of natural transformation
+arguments as I need to do in \cref{etanat,epsilonnat,triangle} below.
 \end{remark}
 
 \section{Two useful facts}
@@ -81,58 +88,59 @@ is in some maximal ideal, but a direct proof is not hard.
     \zer$.
 \end{lemma}
 \begin{proof}
-    By Zorn's lemma, let $I$ be a maximal element of the set of proper ideals of $A$
-    which contain $a$. Define $x(b) = \zer$ iff $b \in I$. Clearly, $x(a) =
-    \zer$; we need to check that $x$ is a homomorphism. 
-The equalities $x(\zer) = \zer$ and $x(b \vee b') = x(b) \vee x(b')$ are
-    easy to check from the defining properties of an ideal. To see that $x(\neg
-    b) = \neg x(b)$ for any $b \in A$, the crucial observation is that if $b
-    \not\in I$ and $\neg b \not\in I$, then it is possible to enlarge $I$ by
-    adding $b$ to it and generating an ideal $I'$, and $I'$ will still be
-    proper because $\neg b \not\in I$. By maximality of $I$ this is
-    impossible.  We thus get that, for any $b \in A$, one of $b$ and $\neg b$
-    must be in $I$, and they can never be both in $I$, since that would give
-    $\one = b \vee \neg b$ in $I$, again contradicting that $I$ is proper. It now
-    follows from the definitions that $x(\neg b) = \neg x(b)$.
+    By Zorn's lemma, let $I$ be a maximal element of the set of proper ideals
+    of $A$ which contain $a$. Define $x(b) = \zer$ iff $b \in I$. Clearly,
+    $x(a) = \zer$; we need to check that $x$ is a homomorphism. The equalities
+    $x(\zer) = \zer$ and $x(b \vee b') = x(b) \vee x(b')$ are easy to check
+    from the defining properties of an ideal. To see that $x(\neg b) = \neg
+    x(b)$ for any $b \in A$, the crucial observation is that if $b \not\in I$
+    and $\neg b \not\in I$, then it is possible to enlarge $I$ by adding $b$ to
+    it and generating an ideal $I'$, and $I'$ will still be proper because
+    $\neg b \not\in I$. By maximality of $I$ this is impossible.  We thus get
+    that, for any $b \in A$, one of $b$ and $\neg b$ must be in $I$, and they
+    can never be both in $I$, since that would give $\one = b \vee \neg b$ in
+    $I$, again contradicting that $I$ is proper. It now follows from the
+    definitions that $x(\neg b) = \neg x(b)$.
 \end{proof}
 
 The following equivalent definition of Boolean spaces is convenient. 
 
 \begin{lemma}\label{BoolSpchar}
-A compact Hausdorff space $X$ is totally disconnected if, and only if, for any
-distinct $x, y \in X$, there exists a clopen set $K \subseteq X$ such that $x
-\in K$ and $y \not\in K$.
+    A compact Hausdorff space $X$ is totally disconnected if, and only if, for
+    any distinct $x, y \in X$, there exists a clopen set $K \subseteq X$ such
+    that $x \in K$ and $y \not\in K$.
 \end{lemma}
 \begin{proof}
-   \href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Connected/TotallyDisconnected.html#isTotallyDisconnected_of_isClopen_set}{The
-    sufficiency is in Mathlib already}. It is also in Mathlib that a
-    \href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Separation.html#instTotallySeparatedSpace}{compact
-    Hausdorff totally disconnected space is totally separated}.
-    (Recall that a space $X$ is called \emph{totally separated} if,
-for any distinct $x,y \in X$, there exist disjoint open sets $U, V \subseteq
-X$ such that $x \in U$ and $y \in V$.) Finally,
-    in any totally separated space, one may actually separate distinct points by clopens, and
-    \href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Connected/TotallyDisconnected.html#exists_isClopen_of_totally_separated}{this is also in Mathlib}.
-    % The necessity is for example proved as
-    % the implication (i) $\Rightarrow$ (ii) of \cite[Thm~II.4.2]{Joh1986} but I
-    % think the following (extracted from there) is a bit simpler, given what is
-    % already in Mathlib. Suppose that $X$ is a totally disconnected compact
-    % Hausdorff space. It suffices to prove that $X$ is totally separated,
+   \docref{Topology/Connected/TotallyDisconnected}{isTotallyDisconnected_of_isClopen_set}{The
+   sufficiency is in Mathlib already}. It is also in Mathlib that a
+   \docref{Topology/Separation}{instTotallySeparatedSpace}{compact
+   Hausdorff totally disconnected space is totally separated}. (Recall that a
+   space $X$ is called \emph{totally separated} if, for any distinct $x,y \in
+   X$, there exist disjoint open sets $U, V \subseteq X$ such that $x \in U$
+   and $y \in V$.) Finally, in any totally separated space, one may actually
+   separate distinct points by clopens, and
+   \docref{Topology/Connected/TotallyDisconnected}
+   {exists_isClopen_of_totally_separated}{this is also in Mathlib}.
+    % The necessity is for example proved as the implication (i) $\Rightarrow$
+   % (ii) of \cite[Thm~II.4.2]{Joh1986} but I think the following (extracted
+   % from there) is a bit simpler, given what is already in Mathlib. Suppose
+   % that $X$ is a totally disconnected compact Hausdorff space. It suffices to
+   % prove that $X$ is totally separated,
     % because it is in Mathlib that
-    % \href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Connected/TotallyDisconnected.html#exists_isClopen_of_totally_separated}{the
-    % separating set in any totally separated space can be chosen to be clopen}.
-    % Let $x, y \in X$ be distinct. By total disconnectedness, since $\{x,y\}$ is
-    % not connected,
-    % \href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Connected/Basic.html#isPreconnected_closed_iff}{we
-    % can pick} closed sets $F_1, F_2$ such that $\{x,y\} \subseteq F_1 \cup F_2$
-    % and each $F_i$ has non-empty intersection with $\{x,y\}$, but $\{x,y\} \cap
-    % F_1 \cap F_2 = \emptyset$. Without loss of generality, we have $x \in F_1$,
-    % and then $x \not\in F_2$ (because $x$ is not in $F_1 \cap F_2)$, and
+   % \docref{Topology/Connected/TotallyDisconnected}{exists_isClopen_of_totally_separated}{the
+   % separating set in any totally separated space can be chosen to be clopen}.
+   % Let $x, y \in X$ be distinct. By total disconnectedness, since $\{x,y\}$
+   % is not connected,
+    % \docref{Topology/Connected/Basic}{isPreconnected_closed_iff}{we can
+   % pick} closed sets $F_1, F_2$ such that $\{x,y\} \subseteq F_1 \cup F_2$
+   % and each $F_i$ has non-empty intersection with $\{x,y\}$, but $\{x,y\}
+   % \cap F_1 \cap F_2 = \emptyset$. Without loss of generality, we have $x \in
+   % F_1$, and then $x \not\in F_2$ (because $x$ is not in $F_1 \cap F_2)$, and
     % therefore (because $F_2$ has non-empty intersection with $\{x,y\}$), we
-    % have  $y \in F_2$, so that $y \not\in F_1$ (because $y$ is not in $F_1 \cap
-    % F_2$). Since $X$ is compact Hausdorff, it is regular, and we can pick
-    % disjoint open sets $U$ and $V$ such that $F_1 \subseteq U$, $y \in V$. In
-    % particular, $x \in U$, as required.
+   % have  $y \in F_2$, so that $y \not\in F_1$ (because $y$ is not in $F_1
+   % \cap F_2$). Since $X$ is compact Hausdorff, it is regular, and we can pick
+   % disjoint open sets $U$ and $V$ such that $F_1 \subseteq U$, $y \in V$. In
+   % particular, $x \in U$, as required.
 \end{proof}
 \section{The functors}
 We define the two functors that make up Stone duality for Boolean algebras:
@@ -146,40 +154,36 @@ subsets of $X$.
     $\Clp(X)$ is a Boolean subalgebra of the Boolean algebra $\mathcal{P}(X)$.
 \end{proposition}
 \begin{proof}
-Finite unions and complements of clopen sets are clopen, and the empty set is
-clopen.
-\href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Sets/Closeds.html#TopologicalSpace.Clopens.instBooleanAlgebraClopens}{This
-is in Mathlib}.
+    Finite unions and complements of clopen sets are clopen, and the empty set
+    is clopen.
+    \docref{Topology/Sets/Closeds}{TopologicalSpace.Clopens.instBooleanAlgebraClopens}{This
+    is in Mathlib}.
 \end{proof} 
 \begin{proposition}\label{clpmorphism}
-    If $f \colon X \to Y$ is a
-continuous function between Boolean spaces, then $f^{-1} \colon \Clp(Y) \to \Clp(X)$ is a Boolean
-algebra homomorphism.
+    If $f \colon X \to Y$ is a continuous function between Boolean spaces, then
+    $f^{-1} \colon \Clp(Y) \to \Clp(X)$ is a Boolean algebra homomorphism.
 \end{proposition}
 \begin{proof}
-    $f^{-1}(\emptyset) = \emptyset$, $f^{-1}(K^\c) =
-f^{-1}(K)^\c$, and $f^{-1}(K_1 \cup K_2) = f^{-1}(K_1) \cup f^{-1}(K_2)$ for
-any clopens $K, K_1, K_2$ of $Y$. 
+    $f^{-1}(\emptyset) = \emptyset$, $f^{-1}(K^\c) = f^{-1}(K)^\c$, and
+    $f^{-1}(K_1 \cup K_2) = f^{-1}(K_1) \cup f^{-1}(K_2)$ for any clopens $K,
+    K_1, K_2$ of $Y$. 
 \end{proof}
-One sometimes writes $\Clp(f)$ for
-$f^{-1}$ but the notation is a bit heavy.
-
+One sometimes writes $\Clp(f)$ for $f^{-1}$ but the notation is a bit heavy.
 \begin{proposition}
     The assignments $X \mapsto \Clp(X)$ and $f \mapsto f^{-1}$ give a
 contravariant functor $\BoolSp \to \BoolAlg$.
 \end{proposition}
 \begin{proof}
     The assignments are well-defined by \cref{clpwelldef} and
-    \cref{clpmorphism}.
-It is a contravariant functor because $\ms{id}_X^{-1}(K) = K$ and $(f
-\circ g)^{-1}(K) = g^{-1}(f^{-1}(K))$ for any clopen $K$.
+    \cref{clpmorphism}. It is a contravariant functor because
+    $\ms{id}_X^{-1}(K) = K$ and $(f \circ g)^{-1}(K) = g^{-1}(f^{-1}(K))$ for
+    any clopen $K$.
 \end{proof}
 
 \paragraph{From algebras to spaces.}
-If $A$ is a Boolean algebra, write
-$\Spec(A)$ for the set of homomorphisms from $A$ to $\mbf{2}$. 
-We equip $\Spec(A)$ with the subspace topology induced by the $|A|$-fold power
-$\mbf{2}^{A}$, where $\mbf{2}$ has the discrete topology.
+If $A$ is a Boolean algebra, write $\Spec(A)$ for the set of homomorphisms from
+$A$ to $\mbf{2}$. We equip $\Spec(A)$ with the subspace topology induced by the
+$|A|$-fold power $\mbf{2}^{A}$, where $\mbf{2}$ has the discrete topology.
 Define, for any $a \in A$,
 \[ U_a \isdef \{ x \in \Spec(A) \ \mid \ x(a) = \one \} \ . \]
 
@@ -187,8 +191,7 @@ Define, for any $a \in A$,
     For any $a \in A$, the complement of $U_a$ is equal to $U_{\neg a}$.
 \end{lemma}
 \begin{proof}
-Note that 
-$x \in (U_a)^\c \iff x(a) \neq \one \iff x(a) = \zer \iff x(\neg a) =
+Note that $x \in (U_a)^\c \iff x(a) \neq \one \iff x(a) = \zer \iff x(\neg a) =
 \one \iff x \in U_{\neg a} \ .$ 
 \end{proof}
 \begin{lemma}\label{etahom}
@@ -236,22 +239,21 @@ $(U_a)_{a \in A}$ of clopen sets.
     = \zer$. Then $x \in U_a$ and $y \not\in U_a$. Thus, any two distinct
     elements are separated by a clopen set. This suffices to conclude that
     $\Spec(A)$ is totally disconnected by
-    \href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/Topology/Connected/TotallyDisconnected.html#isTotallyDisconnected_of_isClopen_set}{
-    a result that is in Mathlib already}, and it also clearly implies that the
-    space is Hausdorff. It remains to prove that $\Spec(A)$ is compact. This is
-    where a weak form of axiom of choice must be used. 
-    We show that the set of homomorphisms
-    is closed as a subspace of $\mbf{2}^{|A|}$, and it is therefore compact,
-    since $\mbf{2}^{|A|}$ is compact by Tychonoff's Theorem. In order to see
-    that $\Spec(A)$ is closed in $\mbf{2}^{|A|}$, notice that
-    \[ \Spec(A) = \bigcap_{a,b\in A} J_{a,b} \cap \bigcap_{a \in A} N_a \cap Z
-    \ , \]
-    where $J_{a,b} \isdef \{ x \in \mbf{2}^A \ : \ x(a \vee b) = x(a) \vee x(b) \},$
-    $N_a \isdef  \{x \in \mbf{2}^A \ : \ x(\neg a) = \neg x(a) \},$ $Z \isdef \{ x
-    \in \mbf{2}^A \ : \ x(\zer) = \zer\}.$ Each of these sets is clopen because its
-    definition only depends on a finite number of coordinates of $x$. For example, to
-    spell this out a bit more,
-    for any $a, b \in A$,
+    \docref{Topology/Connected/TotallyDisconnected}
+    {isTotallyDisconnected_of_isClopen_set}{a result that is in Mathlib
+    already}, and it also clearly implies that the space is Hausdorff. It
+    remains to prove that $\Spec(A)$ is compact. This is where a weak form of
+    axiom of choice must be used. We show that the set of homomorphisms is
+    closed as a subspace of $\mbf{2}^{|A|}$, and it is therefore compact, since
+    $\mbf{2}^{|A|}$ is compact by Tychonoff's Theorem. In order to see that
+    $\Spec(A)$ is closed in $\mbf{2}^{|A|}$, notice that \[ \Spec(A) =
+    \bigcap_{a,b\in A} J_{a,b} \cap \bigcap_{a \in A} N_a \cap Z \ , \]
+    where $J_{a,b} \isdef \{ x \in \mbf{2}^A \ : \ x(a \vee b) = x(a) \vee x(b)
+    \},$ $N_a \isdef  \{x \in \mbf{2}^A \ : \ x(\neg a) = \neg x(a) \},$ $Z
+    \isdef \{ x \in \mbf{2}^A \ : \ x(\zer) = \zer\}.$ Each of these sets is
+    clopen because its definition only depends on a finite number of
+    coordinates of $x$. For example, to spell this out a bit more, for any $a,
+    b \in A$,
     \[ J_{a,b} = 
         (\pi_{a \vee b}^{-1}(\zer) \cap \pi_{a}^{-1}(\zer) \cap
         \pi_{b}^{-1}(\zer)) \cup (\pi_{a \vee b}^{-1}(\one) \cap
@@ -274,39 +276,38 @@ $(U_a)_{a \in A}$ of clopen sets.
 
     Towards a contradiction, suppose that $\one\not\in I$. By an application of
     Zorn's Lemma, there is a maximal ideal $J$ containing $I$ such that still
-    $\one\not\in J$. Let $x \isdef \chi_J \colon A \to \mbf{2}$ be the characteristic function of $J$,
-    that is, $x(a) = \zer$ if $a \in J$ and $x(a) = \one$ otherwise. One can
-    now prove that $x$ is a homomorphism, as follows. By definition $\zer \in
-    I$ so $\zer \in J$, so $x(\zer) = \zer$. Also, in any ideal, we have that
-    $a \vee b \in I$ if, and only if, $a \in I$ and $b \in I$. This shows that
-    $x(a \vee b) = x(a) \vee x(b)$. Finally, we need to show that $x$ preserves
-    negation. Suppose that $x(a) = \one$, so that $a \not\in J$. We need to
-    show that $\neg a \in J$. If $\neg a \not\in J$, then $\one$ is not in the
-    ideal generated by $J \cup \{a\}$. But this ideal strictly contains $J$,
-    contradicting the maximality of $J$. Thus, we must have $x(\neg a) = \zer$.
-    Finally, if $x(a) = \zer$, then $a \in J$, and we cannot also have $\neg a
-    \in J$, because that would imply $\one = a \vee \neg a$ is in $J$ as well,
-contradiction. Thus, $x(\neg a) = \one$.}
+    $\one\not\in J$. Let $x \isdef \chi_J \colon A \to \mbf{2}$ be the
+    characteristic function of $J$, that is, $x(a) = \zer$ if $a \in J$ and
+    $x(a) = \one$ otherwise. One can now prove that $x$ is a homomorphism, as
+    follows. By definition $\zer \in I$ so $\zer \in J$, so $x(\zer) = \zer$.
+    Also, in any ideal, we have that $a \vee b \in I$ if, and only if, $a \in
+    I$ and $b \in I$. This shows that $x(a \vee b) = x(a) \vee x(b)$. Finally,
+    we need to show that $x$ preserves negation. Suppose that $x(a) = \one$, so
+    that $a \not\in J$. We need to show that $\neg a \in J$. If $\neg a \not\in
+    J$, then $\one$ is not in the ideal generated by $J \cup \{a\}$. But this
+    ideal strictly contains $J$, contradicting the maximality of $J$. Thus, we
+    must have $x(\neg a) = \zer$. Finally, if $x(a) = \zer$, then $a \in J$,
+    and we cannot also have $\neg a \in J$, because that would imply $\one = a \vee
+    \neg a$ is in $J$ as well, contradiction. Thus, $x(\neg a) = \one$.}
 \end{proof}
 \begin{definition}
-    Given a homomorphism $f \colon A \to B$ we define $f_* \colon \Spec(B) \to \Spec(A)$
-as the map that sends $y \colon B \to \mbf{2}$ to $y \circ f \colon A \to
-\mbf{2}$. 
+    Given a homomorphism $f \colon A \to B$ we define $f_* \colon \Spec(B) \to
+    \Spec(A)$ as the map that sends $y \colon B \to \mbf{2}$ to $y \circ f
+    \colon A \to \mbf{2}$. 
 \end{definition}
-This is well-defined: Since $y \circ f$ is the composition of two homomorphisms, it is again a
-homomorphism, showing that $f_*$ is a well-defined function. 
+This is well-defined: Since $y \circ f$ is the composition of two
+homomorphisms, it is again a homomorphism, showing that $f_*$ is a well-defined
+function. 
 
 \begin{proposition}
-    For any Boolean
-    algebra homomorphism $f \colon A \to B$, $f_* \colon \Spec(B) \to \Spec(A)$
-    is a continuous function.
+    For any Boolean algebra homomorphism $f \colon A \to B$, $f_* \colon
+    \Spec(B) \to \Spec(A)$ is a continuous function.
 \end{proposition}
 \begin{proof}
-    For any $a \in A$ and $y \in
-\Spec(B)$, we have
+    For any $a \in A$ and $y \in \Spec(B)$, we have
 \[ y \in f_*^{-1}(U_a) \iff f_*(y) \in U_a \iff y(f(a)) = \one \iff y \in
 U_{f(a)}\ , \]
-so that the inverse image $f_*^{-1}(U_a)$ of any basic open set is again a
+    so that the inverse image $f_*^{-1}(U_a)$ of any basic open set is again a
 (basic) open.
 \end{proof}
 
@@ -368,9 +369,10 @@ The function $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
     The function $\epsilon_X$ is a homeomorphism, for any Boolean space $X$.
 \end{proposition}
 \begin{proof}
-    $\epsilon_X$ is continuous: By \cref{Specbasis} and a general fact about continuous functions, it
-    suffices to check that $\epsilon_X^{-1}(U_K)$ is open for every $K \in
-    \Clp(X)$.  This set is equal to $K$ by \cref{epseq}, and thus open.
+    $\epsilon_X$ is continuous: By \cref{Specbasis} and a general fact about
+    continuous functions, it suffices to check that $\epsilon_X^{-1}(U_K)$ is
+    open for every $K \in \Clp(X)$.  This set is equal to $K$ by \cref{epseq},
+    and thus open.
 
     $\epsilon_X$ is injective: For any $x,y \in X$, if $x \neq y$, then there
     is $K \in \Clp(X)$ such that $x \in K$ and $y \not\in K$, using the
@@ -400,14 +402,13 @@ The function $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
     identity functor on $\BoolAlg$ to the functor $\Clp \circ \Spec$.
 \end{proposition}
 \begin{proof}
-    Let $h \colon A \to B$ be a homomorphism and $a \in A$. For any $x
-    \in \Spec(B)$, we have
+    Let $h \colon A \to B$ be a homomorphism and $a \in A$. For any $x \in
+    \Spec(B)$, we have
     \[ x \in \eta_B(h(a)) \iff x(h(a)) = \one \iff x \circ h \in \eta_A(a) \iff
     x \in (\Clp \circ \Spec)(h)(\eta_A(a)) \ , \]
     where the last equivalence follows from the definitions of $\Clp$ and
-    $\Spec$ on morphisms.
-We conclude that
-    $\eta_B(h(a)) = (\Clp \circ \Spec)(h)(\eta_A(a))$, as required.
+    $\Spec$ on morphisms. We conclude that $\eta_B(h(a)) = (\Clp \circ
+    \Spec)(h)(\eta_A(a))$, as required.
 \end{proof}
 
 \begin{proposition}\label{epsilonnat}
@@ -425,36 +426,29 @@ We conclude that
 \end{proof}
 
 According to
-\href{https://leanprover-community.github.io/mathlib4_docs/Mathlib/CategoryTheory/Equivalence.html#CategoryTheory.Equivalence}{the
+\docref{CategoryTheory/Equivalence}{CategoryTheory.Equivalence}{the
 definition of categorical equivalence in Mathlib}, we finally need to prove one
 of the triangle laws for the natural isomorphisms $\eta$ and $\epsilon$, namely
-    the one that says that the composite natural transformation $\Spec \Rightarrow
-    \Spec \Clp \Spec \Rightarrow \Spec$ is the identity.
-    \begin{proposition}\label{triangle}
+the one that says that the composite natural transformation $\Spec \Rightarrow
+\Spec \Clp \Spec \Rightarrow \Spec$ is the identity.
+\begin{proposition}\label{triangle}
     The triangle law for $\eta$ and $\epsilon$ holds. 
 \end{proposition}
 \begin{proof}
-    Let $A$ be a Boolean algebra. We write $f \isdef \Spec \eta_A
-    \colon \Spec \Clp \Spec A \to \Spec A$ and $g \isdef \epsilon_{\Spec A} \colon \Spec A
+    Let $A$ be a Boolean algebra. We write $f \isdef \Spec \eta_A \colon \Spec
+    \Clp \Spec A \to \Spec A$ and $g \isdef \epsilon_{\Spec A} \colon \Spec A
     \to \Spec \Clp \Spec A$; we need to prove that $f \circ g$ is the
-    identity.\footnote{Note that I had to reverse direction of 
-    morphisms with respect to what is written in the mathlib documentation, because $\Spec$ and $\Clp$ are contravariant functors.} 
-    Let $x \in \Spec A$. We want to show that $x
-    = (f \circ g)(x)$.  Write $y \isdef g(x)$. By definition of $g$, we have, for any $K \in \Clp
-    \Spec A$, that $y(K) = \one \iff x \in K$. By definition of $f$, we have,
-    for any $a \in A$, that $f(y)(a) = \one \iff y(\eta_A(a)) = \one$.
-    Combining these two facts, we see that, for any $a \in A$, $f(y)(a) = 1 \iff x \in \eta_A(a)
+    identity.\footnote{
+        Note that I had to reverse direction of morphisms with respect to what
+        is written in the mathlib documentation, because $\Spec$ and $\Clp$ are
+        contravariant functors.}
+    Let $x \in \Spec A$. We want to show that $x = (f \circ g)(x)$.  Write $y
+    \isdef g(x)$. By definition of $g$, we have, for any $K \in \Clp \Spec A$,
+    that $y(K) = \one \iff x \in K$. By definition of $f$, we have, for any $a
+    \in A$, that $f(y)(a) = \one \iff y(\eta_A(a)) = \one$. Combining these two
+    facts, we see that, for any $a \in A$, $f(y)(a) = 1 \iff x \in \eta_A(a)
     \iff x(a) = \one$, by definition of $\eta_A$. Thus, $f(g(x)) = f(y) = x$.
 \end{proof}
-%\begin{proposition}
-%    The functor $\Spec$ is full.
-%\end{proposition}
-
-%\begin{proposition}
-%    The functor $\Spec$ is faithful.
-%\end{proposition}
-
-% \section{Characterization of Boolean spaces}
-
 
 \end{document}
+
