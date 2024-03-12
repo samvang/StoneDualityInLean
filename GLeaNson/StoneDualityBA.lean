@@ -3,6 +3,8 @@ import Mathlib.Order.Category.BoolAlg
 
 open CategoryTheory TopologicalSpace
 
+open scoped Classical
+
 namespace StoneDuality
 
 @[simps obj]
@@ -20,22 +22,102 @@ namespace Spec
 
 open BoolAlg
 
-instance instTopBoolAlg (A : BoolAlg) : TopologicalSpace (A ⟶ of Prop) :=
-  induced (fun f ↦ (f : A → Prop)) (Pi.topologicalSpace (t₂ := fun _ ↦ ⊥))
+variable (A : BoolAlg)
 
-instance (A : BoolAlg) : CompactSpace (A ⟶ of Prop) := sorry
+def basis : Set (Set (A ⟶ of Prop)) :=
+  let U : A → Set (A ⟶ of Prop) := fun a ↦ {x | x.1 a = ⊤}
+  Set.range U
 
-instance (A : BoolAlg) : T2Space (A ⟶ of Prop) := sorry
+instance instTopBoolAlg : TopologicalSpace (A ⟶ of Prop) := generateFrom <| basis A
+  --induced (fun f ↦ (f : A → Prop)) (Pi.topologicalSpace (t₂ := fun _ ↦ ⊥))
 
-instance (A : BoolAlg) : TotallySeparatedSpace (A ⟶ of Prop) := sorry
+theorem basis_is_basis : IsTopologicalBasis (basis A) where
+  exists_subset_inter := by
+    rintro t₁ ⟨a₁, rfl⟩ t₂ ⟨a₂, rfl⟩ x hx
+    simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, eq_iff_iff, Set.mem_inter_iff,
+      Set.mem_setOf_eq] at hx
+    refine ⟨{x | x.1.1.1 (a₁ ⊓ a₂) = ⊤}, ⟨(a₁ ⊓ a₂), rfl⟩, ?_, ?_⟩
+    · simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, eq_iff_iff, Set.mem_setOf_eq]
+      rw [x.map_inf']
+      tauto
+    · intro y (hy : y.1.1.1 _ = ⊤)
+      rw [y.map_inf'] at hy
+      simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, inf_Prop_eq, eq_iff_iff] at hy
+      simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, eq_iff_iff, Set.mem_inter_iff,
+        Set.mem_setOf_eq]
+      tauto
+  sUnion_eq := by
+    rw [Set.sUnion_eq_univ_iff]
+    intro x
+    simp only [basis, BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, eq_iff_iff, Set.mem_range,
+      exists_exists_eq_and, Set.mem_setOf_eq]
+    exact ⟨⊤, eq_iff_iff.mp x.2⟩
+  eq_generateFrom := rfl
+
+noncomputable def emb : (A ⟶ of Prop) → (A → Bool) := fun f a ↦ decide (f a)
+
+instance (A : BoolAlg) : BooleanAlgebra ((forget BoolAlg).obj A) :=
+  (inferInstance : BooleanAlgebra A)
+
+instance (A B : BoolAlg) :
+    BoundedLatticeHomClass (A ⟶ B) A B :=
+  (inferInstance : BoundedLatticeHomClass (BoundedLatticeHom A B) A B)
+
+instance (A B : BoolAlg) :
+    BoundedLatticeHomClass (A ⟶ B) A ((forget BoolAlg).obj B) :=
+  (inferInstance : BoundedLatticeHomClass (BoundedLatticeHom A B) A B)
+
+instance (A B : BoolAlg) :
+    BoundedLatticeHomClass (A ⟶ B) ((forget BoolAlg).obj A) B :=
+  (inferInstance : BoundedLatticeHomClass (BoundedLatticeHom A B) A B)
+
+instance (A B : BoolAlg) :
+    BoundedLatticeHomClass (A ⟶ B) ((forget BoolAlg).obj A) ((forget BoolAlg).obj B) :=
+  (inferInstance : BoundedLatticeHomClass (BoundedLatticeHom A B) A B)
+
+theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
+  refine closedEmbedding_of_continuous_injective_closed ?_ ?_ ?_
+  · apply continuous_pi
+    intro a
+    simp only [emb, BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of]
+    rw [continuous_discrete_rng]
+    rintro ⟨⟩
+    · refine (basis_is_basis A).isOpen ⟨aᶜ, ?_⟩
+      ext x
+      have hc := map_compl' x a
+      rw [eq_iff_iff, compl_iff_not] at hc -- why doesn't `simp` work?
+      simpa [Prop.top_eq_true] using hc
+    · refine (basis_is_basis A).isOpen ⟨a, ?_⟩
+      ext x
+      simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, Prop.top_eq_true, eq_iff_iff,
+        iff_true, Set.mem_setOf_eq, Set.mem_preimage, Set.mem_singleton_iff, decide_eq_true_eq]
+      rfl
+  · intro _ _ h
+    ext a
+    rw [eq_iff_iff]
+    simpa [emb] using congrFun h a
+  · sorry
+
+instance : CompactSpace (A ⟶ of Prop) := sorry
+
+instance : T2Space (A ⟶ of Prop) := sorry
+
+instance : TotallySeparatedSpace (A ⟶ of Prop) := sorry
 
 end Spec
 
 open Spec
 
+theorem Spec_map_cont {X Y : BoolAlg} (f : Y ⟶ X) :
+    Continuous fun (y : X ⟶ BoolAlg.of Prop) ↦ f ≫ y := by
+  -- rw [(basis_is_basis Y).continuous_iff]
+  rw [continuous_generateFrom_iff]
+  rintro _ ⟨a, rfl⟩
+  exact (basis_is_basis X).isOpen ⟨f a, rfl⟩
+
 def Spec : BoolAlgᵒᵖ ⥤ Profinite where
   obj A := Profinite.of (A.unop ⟶ BoolAlg.of Prop)
-  map f := ⟨fun y ↦ f.unop ≫ y, sorry⟩
+  map f := ⟨fun y ↦ f.unop ≫ y, Spec_map_cont f.unop⟩
 
 
 def Equiv : Profinite ≌ BoolAlgᵒᵖ where
