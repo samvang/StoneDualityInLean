@@ -28,7 +28,7 @@ def basis : Set (Set (A ⟶ of Prop)) :=
   let U : A → Set (A ⟶ of Prop) := fun a ↦ {x | x.1 a = ⊤}
   Set.range U
 
-instance instTopBoolAlg : TopologicalSpace (A ⟶ of Prop) := generateFrom <| basis A
+instance instTopHomBoolAlgProp : TopologicalSpace (A ⟶ of Prop) := generateFrom <| basis A
   --induced (fun f ↦ (f : A → Prop)) (Pi.topologicalSpace (t₂ := fun _ ↦ ⊥))
 
 theorem basis_is_basis : IsTopologicalBasis (basis A) where
@@ -55,6 +55,13 @@ theorem basis_is_basis : IsTopologicalBasis (basis A) where
   eq_generateFrom := rfl
 
 noncomputable def emb : (A ⟶ of Prop) → (A → Bool) := fun f a ↦ decide (f a)
+
+
+-- TODO: Check that with
+-- attribute [-instance] sierpinskiSpace
+-- def discreteProp : TopologicalSpace Prop := sorry
+-- the following might replace `emb` still being continuous
+def emb' : (A ⟶ of Prop) → (A → Prop) := (·)
 
 instance (A : BoolAlg) : BooleanAlgebra ((forget BoolAlg).obj A) :=
   (inferInstance : BooleanAlgebra A)
@@ -112,7 +119,14 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
     ext
     rw [eq_iff_iff]
     simpa [emb] using congrFun h _
-  · refine (inducing_emb _).isClosedMap ?_
+  · apply (inducing_emb _).isClosedMap
+    -- rw [← isOpen_compl_iff, isOpen_pi_iff]
+--     intro f hf
+--     rw [Set.mem_compl_iff] at hf
+
+
+-- #exit
+  -- · refine (inducing_emb _).isClosedMap ?_
     let J : A → A → (Set (A → Bool)) := fun a b ↦ {x | x (a ⊔ b) = (x a ∨ x b)}
     let I : A → A → (Set (A → Bool)) := fun a b ↦ {x | x (a ⊓ b) = (x a ∧ x b)}
     let T : Set (A → Bool) := {x | x ⊤ = true}
@@ -143,7 +157,12 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
           congr
     rw [this]
     refine IsClosed.inter (IsClosed.inter (IsClosed.inter ?_ ?_) ?_) ?_
-    · sorry
+    · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
+      rw [← isOpen_compl_iff, isOpen_pi_iff]
+      intro f hf
+      simp at hf
+      use {i, j, i ⊔ j}
+      sorry
     · sorry
     · sorry
     · sorry
