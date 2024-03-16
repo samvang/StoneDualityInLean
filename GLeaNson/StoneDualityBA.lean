@@ -113,23 +113,19 @@ theorem inducing_emb : Inducing (emb A) where
       rfl
 
 /- When Y is a T2 space with a continuous binary operation and X is a set with a binary operation,
-  the set of functions from X to Y that preserve the Mul is closed, as a subspace of X → Y. -/
-theorem IsClosed_PreserveBinary_T2
- [TopologicalSpace Y] [T2Space Y]
- (x₁ x₂ : X) (oX : X → X → X) (oY : Y → Y → Y) (hcts : Continuous (fun (y₁,y₂) ↦ oY y₁ y₂))
-  : IsClosed { f : X → Y | f (oX x₁ x₂) = oY (f x₁) (f x₂)}
-  := by
-  let g1 (f : X → Y) := f (oX x₁ x₂)
-  let g2 (f : X → Y) := oY (f x₁) (f x₂)
-  let k (f : X → Y) := (f x₁, f x₂)
-  let g (f : X → Y) := (g1 f, g2 f)
-  have kcts : Continuous k := by continuity
-  have g2cts : Continuous g2 := Continuous.comp hcts kcts
-  have gcts : Continuous g := by continuity
-  have key : { f : X → Y | f (oX x₁ x₂) = oY (f x₁) (f x₂)} = g⁻¹' (Set.diagonal Y) := by
-    ext x; simp
-  rw [key]
-  exact IsClosed.preimage gcts isClosed_diagonal
+  the set of functions from X to Y that preserve the operation is closed as a subspace of X → Y. -/
+theorem IsClosed_PreserveBinary_T2 [TopologicalSpace Y] [T2Space Y] (x₁ x₂ : X) (oX : X → X → X)
+ (oY : Y → Y → Y) (hcts : Continuous (fun (y₁,y₂) ↦ oY y₁ y₂)) :
+ IsClosed { f : X → Y | f (oX x₁ x₂) = oY (f x₁) (f x₂)} := by
+    let g2 (f : X → Y) := oY (f x₁) (f x₂)
+    let g (f : X → Y) := (f (oX x₁ x₂), g2 f)
+    have : { f : X → Y | f (oX x₁ x₂) = oY (f x₁) (f x₂)} = g⁻¹' (Set.diagonal Y) := by ext x; simp
+    rw [this]
+    let k (f : X → Y) := (f x₁, f x₂)
+    have kcts : Continuous k := by continuity --or: by simp [continuous_prod_mk, continuous_apply]
+    have g2cts : Continuous g2 := Continuous.comp hcts kcts
+    exact IsClosed.preimage (by continuity) isClosed_diagonal
+
 /- Proof sketch of what is happening above:
   When x ∈ X, I write π_x for the x-coordinate projection map (X → Y) → Y.
   Note that the set in question can be written as
