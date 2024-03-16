@@ -114,10 +114,10 @@ theorem inducing_emb : Inducing (emb A) where
 
 /- When Y is a T2 space with a continuous binary operation and X is a set with a binary operation,
   the set of functions from X to Y that preserve the Mul is closed, as a subspace of X → Y. -/
-theorem IsClosed_HomSet_T2
+theorem IsClosed_PreserveBinary_T2
  [TopologicalSpace Y] [T2Space Y]
  (x₁ x₂ : X) (oX : X → X → X) (oY : Y → Y → Y) (hcts : Continuous (fun (y₁,y₂) ↦ oY y₁ y₂))
-  : IsClosed ({ f : X → Y | f (oX x₁ x₂) = oY (f x₁) (f x₂)})
+  : IsClosed { f : X → Y | f (oX x₁ x₂) = oY (f x₁) (f x₂)}
   := by
   let g1 (f : X → Y) := f (oX x₁ x₂)
   let g2 (f : X → Y) := oY (f x₁) (f x₂)
@@ -144,6 +144,12 @@ theorem IsClosed_HomSet_T2
   Y → Y → Y (like when we apply it below) and sometimes type Y × Y → Y (like when we reason about
   the diagonal as a closed subset of Y × Y). This can probably be improved.]
 -/
+
+theorem IsClosed_PreserveNullary_T1 [TopologicalSpace Y] [T1Space Y] (x : X) (y : Y) :
+  IsClosed { f : X → Y | f x = y } := by
+    let evx (f : X → Y) := f x
+    have : IsClosed (evx⁻¹' {y}) := IsClosed.preimage (by continuity) (by simp [T1Space.t1 y])
+    exact this
 
 theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
   refine closedEmbedding_of_continuous_injective_closed ?_ ?_ ?_
@@ -185,15 +191,12 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
     refine IsClosed.inter (IsClosed.inter (IsClosed.inter ?_ ?_) ?_) ?_
     · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
       simp only [Bool.decide_or, Bool.decide_coe]
-      exact (IsClosed_HomSet_T2 i j (Sup.sup) (or) (by continuity))
+      exact (IsClosed_PreserveBinary_T2 i j (Sup.sup) (or) (by continuity))
     · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
       simp only [Bool.decide_and, Bool.decide_coe]
-      exact (IsClosed_HomSet_T2 i j (Inf.inf) (and) (by continuity))
-    · -- inverse image of a point under the projection map is closed, should be easy
-      sorry
-    · -- idem
-      sorry
-
+      exact (IsClosed_PreserveBinary_T2 i j (Inf.inf) (and) (by continuity))
+    · exact (IsClosed_PreserveNullary_T1 ⊤ true)
+    · exact (IsClosed_PreserveNullary_T1 ⊥ false)
 
 instance : CompactSpace (A ⟶ of Prop) := sorry
 
