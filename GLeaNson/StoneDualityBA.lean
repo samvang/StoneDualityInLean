@@ -112,6 +112,39 @@ theorem inducing_emb : Inducing (emb A) where
         coe_of, Prop.top_eq_true, eq_iff_iff, iff_true, Set.mem_setOf_eq]
       rfl
 
+/- When Y is a T2 space with a continuous binary operation and X is a set with a binary operation,
+  the set of functions from X to Y that preserve the Mul is closed, as a subspace of X → Y. -/
+theorem IsClosed_HomSet_T2
+ [TopologicalSpace Y] [T2Space Y]
+ (x₁ x₂ : X) (oX : X → X → X) (oY : Y → Y → Y) (hcts : Continuous (fun (y₁,y₂) ↦ oY y₁ y₂))
+  : IsClosed ({ f : X → Y | f (oX x₁ x₂) = oY (f x₁) (f x₂)})
+  := by
+  let g1 (f : X → Y) := f (oX x₁ x₂)
+  let g2 (f : X → Y) := oY (f x₁) (f x₂)
+  let k (f : X → Y) := (f x₁, f x₂)
+  let g (f : X → Y) := (g1 f, g2 f)
+  have kcts : Continuous k := by continuity
+  have g2cts : Continuous g2 := Continuous.comp hcts kcts
+  have gcts : Continuous g := by continuity
+  have key : { f : X → Y | f (oX x₁ x₂) = oY (f x₁) (f x₂)} = g⁻¹' (Set.diagonal Y) := by
+    ext x; simp
+  rw [key]
+  exact IsClosed.preimage gcts isClosed_diagonal
+/- Proof sketch of what is happening above:
+  When x ∈ X, I write π_x for the x-coordinate projection map (X → Y) → Y.
+  Note that the set in question can be written as
+  g⁻¹ (Δ)
+  where Δ is the diagonal in Y × Y, which is closed because Y is T2.
+  g is the function (X → Y) → (Y × Y) defined by
+  g(f) := (f (oX x₁ x₂), oY (f x₁) (f x₂)).
+  And g is continuous because each component is:
+  the first component is equal to π_x where x := oX x₁ x₂
+  and the second component is the composite oY ∘ ⟨π_(x₁), π_(x₂)⟩.
+  [NB: I had to do some hacking with currying oY, sometimes we want it to have type
+  Y → Y → Y (like when we apply it below) and sometimes type Y × Y → Y (like when we reason about
+  the diagonal as a closed subset of Y × Y). This can probably be improved.]
+-/
+
 theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
   refine closedEmbedding_of_continuous_injective_closed ?_ ?_ ?_
   · exact continuous_emb _
@@ -119,14 +152,7 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
     ext
     rw [eq_iff_iff]
     simpa [emb] using congrFun h _
-  · apply (inducing_emb _).isClosedMap
-    -- rw [← isOpen_compl_iff, isOpen_pi_iff]
---     intro f hf
---     rw [Set.mem_compl_iff] at hf
-
-
--- #exit
-  -- · refine (inducing_emb _).isClosedMap ?_
+  · refine (inducing_emb _).isClosedMap ?_
     let J : A → A → (Set (A → Bool)) := fun a b ↦ {x | x (a ⊔ b) = (x a ∨ x b)}
     let I : A → A → (Set (A → Bool)) := fun a b ↦ {x | x (a ⊓ b) = (x a ∧ x b)}
     let T : Set (A → Bool) := {x | x ⊤ = true}
@@ -158,14 +184,15 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
     rw [this]
     refine IsClosed.inter (IsClosed.inter (IsClosed.inter ?_ ?_) ?_) ?_
     · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
-      rw [← isOpen_compl_iff, isOpen_pi_iff]
-      intro f hf
-      simp at hf
-      use {i, j, i ⊔ j}
+      simp only [Bool.decide_or, Bool.decide_coe]
+      exact (IsClosed_HomSet_T2 i j (Sup.sup) (or) (by continuity))
+    · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
+      simp only [Bool.decide_and, Bool.decide_coe]
+      exact (IsClosed_HomSet_T2 i j (Inf.inf) (and) (by continuity))
+    · -- inverse image of a point under the projection map is closed, should be easy
       sorry
-    · sorry
-    · sorry
-    · sorry
+    · -- idem
+      sorry
 
 
 instance : CompactSpace (A ⟶ of Prop) := sorry
