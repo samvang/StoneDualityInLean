@@ -194,11 +194,89 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
     · exact (IsClosed_PreserveNullary_T1 ⊤ true)
     · exact (IsClosed_PreserveNullary_T1 ⊥ false)
 
-instance : CompactSpace (A ⟶ of Prop) := sorry
+lemma mem_basis (p : Prop) : {x : A ⟶ of Prop | x a = p} ∈ basis A := by
+  cases Classical.dec p with
+  | isFalse h =>
+    have : p = ⊥ := Mathlib.Meta.NormNum.eq_of_false h fun a ↦ a
+    rw [this]
+    use aᶜ
+    ext x
+    simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, Prop.top_eq_true, eq_iff_iff,
+      iff_true, Set.mem_setOf_eq]
+    rw [eq_iff_iff]
+    simp only [Prop.bot_eq_false, iff_false]
+    rw [← compl_iff_not, ← map_compl' x a ]
+    rfl
+  | isTrue h =>
+    have : p = ⊤ := propext { mp := fun _ ↦ trivial, mpr := fun _ ↦ h }
+    rw [this]
+    use a
+    ext x
+    simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, eq_iff_iff, Set.mem_setOf_eq]
+    rw [eq_iff_iff]
+    simp only [Prop.top_eq_true, Prop.bot_eq_false, iff_false, iff_true]
+    rfl
 
-instance : T2Space (A ⟶ of Prop) := sorry
+instance : CompactSpace (A ⟶ of Prop) where
+  isCompact_univ := by
+    let K := Set.range (emb A)
+    have hK : IsCompact K := (closedEmbedding_emb A).closed_range.isCompact
+    rw [← Set.preimage_range]
+    exact (closedEmbedding_emb A).isCompact_preimage hK
 
-instance : TotallyDisconnectedSpace (A ⟶ of Prop) := sorry
+instance : TotallySeparatedSpace (A ⟶ of Prop) where
+  isTotallySeparated_univ := by
+    intro x _ y _ h
+    rw [DFunLike.ne_iff] at h
+    obtain ⟨a, ha⟩ := h
+    refine ⟨{z | z a = x a}, {z | z a = y a}, ?_⟩
+    refine ⟨(basis_is_basis A).isOpen (mem_basis _ _), (basis_is_basis A).isOpen (mem_basis _ _),
+      rfl, rfl, ?_, ?_⟩
+    · intro z _
+      simp
+      cases Classical.dec (x a) with
+      | isFalse h =>
+        have : x a = ⊥ := Mathlib.Meta.NormNum.eq_of_false h fun a ↦ a
+        rw [this]
+        have hy : y a = ⊤ := by
+          rw [Prop.bot_eq_false, eq_iff_iff] at this
+          rw [this] at ha
+          simp at ha
+          rw [eq_iff_iff] at ha
+          simp at ha
+          rw [Prop.top_eq_true, eq_iff_iff]
+          simpa using ha
+        rw [hy, eq_iff_iff, eq_iff_iff, Prop.top_eq_true, Prop.bot_eq_false]
+        simpa using em' (z a)
+      | isTrue h =>
+        have : x a = ⊤ := top_unique fun a ↦ h
+        rw [this]
+        have hy : y a = ⊥ := by
+          rw [Prop.top_eq_true, eq_iff_iff] at this
+          rw [this] at ha
+          simp at ha
+          rw [eq_iff_iff] at ha
+          simp at ha
+          rw [Prop.bot_eq_false, eq_iff_iff]
+          simpa using ha
+        rw [hy, eq_iff_iff, eq_iff_iff, Prop.top_eq_true, Prop.bot_eq_false]
+        simpa using (em' (z a)).symm
+    · rw [Set.disjoint_iff]
+      intro z ⟨hxz, hyz⟩
+      simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, eq_iff_iff, Set.mem_setOf_eq]
+        at hxz
+      simp only [BddDistLat.coe_toBddLat, coe_toBddDistLat, coe_of, eq_iff_iff, Set.mem_setOf_eq]
+        at hyz
+      rw [hxz] at hyz
+      exact ha hyz
+
+-- Is this really not in mathlib?
+instance TotallySeparatedSpace.t2Space (α : Type*) [TopologicalSpace α] [TotallySeparatedSpace α] :
+    T2Space α where
+  t2 x y h := by
+    obtain ⟨u, v, h₁, h₂, h₃, h₄, _, h₅⟩ :=
+      TotallySeparatedSpace.isTotallySeparated_univ x (by triv) y (by triv) h
+    exact ⟨u, v, h₁, h₂, h₃, h₄, h₅⟩
 
 end Spec
 
