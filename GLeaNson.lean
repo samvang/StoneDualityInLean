@@ -2,3 +2,4 @@
 -- Import modules here that should be built as part of the library.
 import «GLeaNson».Basic
 import «GLeaNson».StoneDualityBA
+import «GLeaNson».HomClosed
