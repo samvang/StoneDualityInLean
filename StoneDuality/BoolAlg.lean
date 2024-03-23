@@ -1,6 +1,6 @@
 import Mathlib.Topology.Category.Profinite.Basic
 import Mathlib.Order.Category.BoolAlg
-import GLeaNson.HomClosed
+import StoneDuality.HomClosed
 
 open CategoryTheory TopologicalSpace
 
