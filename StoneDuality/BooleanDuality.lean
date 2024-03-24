@@ -2,6 +2,13 @@ import Mathlib.Topology.Category.Profinite.Basic
 import Mathlib.Order.Category.BoolAlg
 import StoneDuality.HomClosed
 
+/-!
+Stone duality for Boolean algebras
+
+Authors (so far):
+Dagur Asgeirsson, Filippo A. E. Nuccio, and Sam van Gool
+-/
+
 open CategoryTheory TopologicalSpace
 
 open scoped Classical
@@ -62,7 +69,7 @@ noncomputable def emb : (A ⟶ of Prop) → (A → Bool) := fun f a ↦ decide (
 -- attribute [-instance] sierpinskiSpace
 -- def discreteProp : TopologicalSpace Prop := sorry
 -- the following might replace `emb` still being continuous
-def emb' : (A ⟶ of Prop) → (A → Prop) := (·)
+-- def emb' : (A ⟶ of Prop) → (A → Prop) := (·)
 
 instance (A : BoolAlg) : BooleanAlgebra ((forget BoolAlg).obj A) :=
   (inferInstance : BooleanAlgebra A)
@@ -113,7 +120,6 @@ theorem inducing_emb : Inducing (emb A) where
         coe_of, Prop.top_eq_true, eq_iff_iff, iff_true, Set.mem_setOf_eq]
       rfl
 
-
 theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
   refine closedEmbedding_of_continuous_injective_closed ?_ ?_ ?_
   · exact continuous_emb _
@@ -130,19 +136,25 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
       ext x
       constructor
       · rintro ⟨x, rfl⟩
-        simp only [Bool.decide_coe, Set.mem_inter_iff,
+        simp only [I, J, T, B, Bool.decide_coe, Set.mem_inter_iff,
           Set.mem_iInter, Set.mem_setOf_eq, emb, map_sup, map_inf, map_top, decide_eq_true_eq,
           map_bot, decide_eq_false_iff_not]
-        rw [Prop.top_eq_true, Prop.bot_eq_false]
-        simp only [and_true, not_false_eq_true]
-        refine ⟨fun a b ↦ ?_, fun a b ↦ ?_⟩
-        all_goals congr
+        rw [Prop.bot_eq_false]
+        exact ⟨⟨⟨fun _ _ ↦ by congr, fun _ _ ↦ by congr⟩, by trivial⟩, by trivial⟩
       · intro ⟨⟨⟨h_map_sup, h_map_inf⟩, h_map_top⟩, h_map_bot⟩
         refine ⟨⟨⟨⟨fun a ↦ (x a : Prop), ?_⟩, ?_⟩, ?_, ?_⟩, ?_⟩
         · simp only [Set.mem_iInter, Set.mem_setOf_eq] at h_map_sup
           simp [h_map_sup]
+          -- intros
+          -- simp_all only [Bool.decide_and, Bool.decide_eq_true,
+          --   Set.mem_iInter, Set.mem_setOf_eq, Bool.decide_or,
+          --   Bool.or_eq_true, I, T, B, J]
         · simp only [Set.mem_iInter, Set.mem_setOf_eq] at h_map_inf
           simp [h_map_inf]
+          -- intros
+          -- simp_all only [Bool.decide_or, Bool.decide_eq_true,
+          --   Set.mem_iInter, Set.mem_setOf_eq, Bool.decide_and,
+          --   Bool.and_eq_true, I, T, B, J]
         · simpa [Prop.top_eq_true] using h_map_top
         · simpa [Prop.bot_eq_false] using h_map_bot
         · ext a
@@ -153,10 +165,10 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
     rw [this]
     refine IsClosed.inter (IsClosed.inter (IsClosed.inter ?_ ?_) ?_) ?_
     · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
-      simp only [Bool.decide_or, Bool.decide_coe]
+      simp only [J, Bool.decide_or, Bool.decide_coe]
       exact (IsClosed_PreserveBinary_T2 i j (Sup.sup) (or) (by continuity))
     · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
-      simp only [Bool.decide_and, Bool.decide_coe]
+      simp only [I, Bool.decide_and, Bool.decide_coe]
       exact (IsClosed_PreserveBinary_T2 i j (Inf.inf) (and) (by continuity))
     · exact (IsClosed_PreserveNullary_T1 ⊤ true)
     · exact (IsClosed_PreserveNullary_T1 ⊥ false)
