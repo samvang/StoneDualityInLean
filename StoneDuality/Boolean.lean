@@ -1,10 +1,11 @@
 import Mathlib.Topology.Category.Profinite.Basic
 import Mathlib.Order.Category.BoolAlg
-import GLeaNson.HomClosed
+import StoneDuality.HomClosed
 
 open CategoryTheory TopologicalSpace
 
 open scoped Classical
+noncomputable section
 
 namespace StoneDuality
 
@@ -260,6 +261,38 @@ def Spec : BoolAlgᵒᵖ ⥤ Profinite where
   obj A := Profinite.of (A.unop ⟶ BoolAlg.of Prop)
   map f := ⟨fun y ↦ f.unop ≫ y, Spec_map_cont f.unop⟩
 
+
+def epsilonObjObj {X : Profinite} (x : X) : BoundedLatticeHom (Clopens X) Prop
+where
+  toFun := fun K ↦ (x ∈ K)
+  map_sup' := by intros; rfl
+  map_inf' := by intros; rfl
+  map_top' := by intros; rfl
+  map_bot' := by intros; rfl
+
+def epsilonCont {X : Profinite} : ContinuousMap X (Profinite.of
+   (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) where
+     toFun := epsilonObjObj
+     continuous_toFun := --TODO: show that it's continuous
+      by sorry
+
+def epsilonObj {X : Profinite} : X ≅ (Profinite.of
+   (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) := by
+  --  apply Profinite.isoOfHomeo
+   apply Profinite.isoOfBijective
+   swap
+   exact epsilonCont
+   -- TODO: show that it's bijective
+   sorry
+
+def epsilon : 𝟭 Profinite ≅ Clp.rightOp ⋙ Spec := by
+  apply NatIso.ofComponents
+  swap
+  intro X
+  exact epsilonObj
+
+  -- TODO: prove naturality
+  sorry
 
 def Equiv : Profinite ≌ BoolAlgᵒᵖ where
   functor := Clp.rightOp
