@@ -276,11 +276,32 @@ def epsilonCont {X : Profinite} : ContinuousMap X (Profinite.of
      continuous_toFun := --TODO: show that it's continuous
       by sorry
 
-def epsilonObj {X : Profinite} : X ≅ (Profinite.of
-   (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) := by
-   refine Profinite.isoOfBijective epsilonCont ?_
-   -- TODO: show that it's bijective
-   sorry
+-- TODO move somewhere?
+lemma coerce_bijective [TopologicalSpace X] [TopologicalSpace Y] (f : ContinuousMap X Y) (h : Function.Bijective f.toFun) : Function.Bijective f := by constructor; exact h.1; exact h.2
+
+-- TODO move to Order/Hom/Lattice.lean
+theorem BoundedLatticeHom.ext_iff {α β : Type*} [Lattice α] [Lattice β] [BoundedOrder α] [BoundedOrder β] {f g : BoundedLatticeHom α β } : f = g ↔ ∀ x, f x = g x :=
+  DFunLike.ext_iff
+
+def epsilonObj {X : Profinite} : X ≅ (Profinite.of (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) :=
+  by
+  refine Profinite.isoOfBijective epsilonCont ?_
+  apply coerce_bijective
+  constructor
+  · intro x y
+    simp only [epsilonCont]
+    rw [BoundedLatticeHom.ext_iff]
+    contrapose!
+    intro hne
+    obtain ⟨K, hK⟩ := exists_isClopen_of_totally_separated hne
+    exists ⟨K, hK.1⟩
+    simp only [ne_eq, eq_iff_iff, epsilonObjObj, BoundedLatticeHom.coe_mk, LatticeHom.coe_mk,
+    SupHom.coe_mk, Clopens.mem_mk]
+    push_neg
+    left
+    exact hK.2
+  · --TODO: prove surjectivity
+    sorry
 
 def epsilon : 𝟭 Profinite ≅ Clp.rightOp ⋙ Spec := by
   refine NatIso.ofComponents (fun X ↦ epsilonObj) ?_
