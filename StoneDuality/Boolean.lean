@@ -261,7 +261,7 @@ def Spec : BoolAlgᵒᵖ ⥤ Profinite where
   obj A := Profinite.of (A.unop ⟶ BoolAlg.of Prop)
   map f := ⟨fun y ↦ f.unop ≫ y, Spec_map_cont f.unop⟩
 
-
+-- ## Definition of epsilon
 def epsilonObjObj {X : Profinite} (x : X) : BoundedLatticeHom (Clopens X) Prop
 where
   toFun := fun K ↦ (x ∈ K)
@@ -278,27 +278,74 @@ def epsilonCont {X : Profinite} : ContinuousMap X (Profinite.of
 
 def epsilonObj {X : Profinite} : X ≅ (Profinite.of
    (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) := by
-  --  apply Profinite.isoOfHomeo
-   apply Profinite.isoOfBijective
-   swap
-   exact epsilonCont
+   refine Profinite.isoOfBijective epsilonCont ?_
    -- TODO: show that it's bijective
    sorry
 
 def epsilon : 𝟭 Profinite ≅ Clp.rightOp ⋙ Spec := by
-  apply NatIso.ofComponents
-  swap
-  intro X
-  exact epsilonObj
-
+  refine NatIso.ofComponents (fun X ↦ epsilonObj) ?_
   -- TODO: prove naturality
   sorry
+
+-- ## Definition of eta
+def etaObjObjSet {A : BoolAlg} (a : A) :
+  Set (Profinite.of (A ⟶ BoolAlg.of Prop)) := { x | x.toFun a = ⊤ }
+
+def IsClopen_etaObjObj {A : BoolAlg} (a : A)  : IsClopen (etaObjObjSet a) := by
+  constructor
+  · sorry -- TODO: show that eta a is closed
+  · sorry -- TOOD: show that eta a is open
+
+def etaObjObj {A : BoolAlg} (a : A) : (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) := by
+  refine ⟨etaObjObjSet a, IsClopen_etaObjObj a⟩
+
+-- the following is probably already in library somewhere (we'll need the same for inf, top and bot)
+lemma supeqtop (a b : Prop) : a ⊔ b = ⊤ ↔ a = ⊤ ∨ b = ⊤ := by
+  rw [Prop.top_eq_true]
+  simp only [sup_Prop_eq, eq_iff_iff, iff_true]
+
+def etaObj_real {A : BoolAlg} : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
+  toFun := etaObjObj
+  map_sup' := by
+    intros a b
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, etaObjObj,
+     etaObjObjSet]
+    ext x
+    simp only [Clopens.coe_mk, Clopens.coe_sup, Set.mem_union, Set.mem_setOf_eq]
+    rw [x.map_sup']
+    apply supeqtop
+  -- TODO: fill these (but hopefully can shorten the above proof?)
+  map_inf' := sorry
+  map_top' := sorry
+  map_bot' := sorry
+
+-- TODO: I am stuck with all the op's and rightOp's from here on... help
+def etaObj_hom {A : BoolAlgᵒᵖ} : (𝟭 BoolAlgᵒᵖ).toPrefunctor.obj A ⟶ (Spec ⋙ Clp.rightOp).toPrefunctor.obj A := by
+  simp
+  have f := @etaObj_real A.unop
+  sorry
+
+def etaObj {A : BoolAlgᵒᵖ} : (𝟭 BoolAlgᵒᵖ).toPrefunctor.obj A ≅ (Spec ⋙ Clp.rightOp).toPrefunctor.obj A
+  := by
+    refine Iso.mk ?_ ?_ ?_ ?_
+    all_goals sorry
+
+def eta : 𝟭 BoolAlgᵒᵖ ≅ Spec ⋙ Clp.rightOp := by
+  refine NatIso.ofComponents (fun A ↦ etaObj) ?_
+  sorry
+
+
+theorem triangle : ∀ (X : Profinite),
+  Clp.rightOp.map (epsilon.hom.app X) ≫ eta.symm.hom.app (Clp.rightOp.obj X) =
+    𝟙 (Clp.rightOp.obj X) := by
+    intro X
+    sorry
 
 def Equiv : Profinite ≌ BoolAlgᵒᵖ where
   functor := Clp.rightOp
   inverse := Spec
-  unitIso := sorry
-  counitIso := sorry
-  functor_unitIso_comp := sorry
+  unitIso := epsilon
+  counitIso := eta.symm
+  functor_unitIso_comp := triangle
 
 end StoneDuality
