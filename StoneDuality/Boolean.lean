@@ -2,6 +2,8 @@ import Mathlib.Topology.Category.Profinite.Basic
 import Mathlib.Order.Category.BoolAlg
 import StoneDuality.HomClosed
 
+import Mathlib.Topology.Sets.Closeds
+
 open CategoryTheory TopologicalSpace
 
 open scoped Classical
@@ -270,11 +272,26 @@ where
   map_top' := by intros; rfl
   map_bot' := by intros; rfl
 
+lemma preimage_epsilonObjObj_eq {X : Profinite} (a : Clopens X) :
+  (epsilonObjObj ⁻¹' {x | x.toLatticeHom a ↔ ⊤}) = a := Set.ext fun _ ↦ iff_true_iff
+
+
 def epsilonCont {X : Profinite} : ContinuousMap X (Profinite.of
    (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) where
      toFun := epsilonObjObj
-     continuous_toFun := --TODO: show that it's continuous
-      by sorry
+     continuous_toFun :=
+      by
+      let A := BoolAlg.of (Clopens X)
+      let hB := basis_is_basis A
+      rw [TopologicalSpace.IsTopologicalBasis.continuous_iff hB]
+      intro U hU
+      simp only [basis, BoolAlg.coe_of, BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat,
+        eq_iff_iff, Set.mem_range] at hU
+      obtain ⟨a, ha⟩ := hU
+      simp_rw [← ha]
+      have : (epsilonObjObj ⁻¹' {x | x.toLatticeHom a ↔ ⊤}) = a := Set.ext fun _ ↦ iff_true_iff
+      erw [this]
+      exact (Clopens.isClopen a).2
 
 -- TODO move somewhere?
 lemma coerce_bijective [TopologicalSpace X] [TopologicalSpace Y] (f : ContinuousMap X Y) (h : Function.Bijective f.toFun) : Function.Bijective f := by constructor; exact h.1; exact h.2
