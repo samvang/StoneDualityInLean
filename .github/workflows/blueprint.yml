@@ -23,10 +23,10 @@ jobs:
         run: curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain leanprover/lean4:4.5.0
       
       - name: Update docgen4
-        run: ~/.elan/bin/lake update «doc-gen4»
+        run: ~/.elan/bin/lake -R update «doc-gen4»
       
       - name: Update checkdecls
-        run: ~/.elan/bin/lake update checkdecls
+        run: ~/.elan/bin/lake -R update checkdecls
 
       - name: Get cache
         run: ~/.elan/bin/lake -Kenv=dev exe cache get || true
@@ -50,7 +50,7 @@ jobs:
             MathlibDoc-
 
       - name: Build documentation
-        run: ~/.elan/bin/lake -Kenv=dev build StoneDuality:docs
+        run: ~/.elan/bin/lake -R -Kenv=dev build StoneDuality:docs
 
       - name: Build blueprint and copy to `docs/blueprint`
         uses: xu-cheng/texlive-action@v2
