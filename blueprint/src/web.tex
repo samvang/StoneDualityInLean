@@ -6,11 +6,19 @@
 
 \documentclass{report}
 
-\usepackage{amssymb, amsthm, amsmath}
+% \usepackage{etoolbox}
+
+% \RequirePackage[dvipsnames]{xcolor}
+% \RequirePackage{dsfont}
+
+\usepackage{amsmath, amssymb, amsthm}
+
 \usepackage{hyperref}
+\usepackage{cleveref}
+
 \usepackage[showmore, dep_graph]{blueprint}
 
-
+\input{packages}
 \input{macros/common}
 \input{macros/web}
 
@@ -18,10 +26,14 @@
 \github{https://github.com/samvang/StoneDualityInLean}
 \dochome{https://samvang.github.io/StoneDualityInLean/docs}
 
-\title{Stone Duality in Lean}
-\author{Dagur Ásgeirsson \and Sam van Gool \and Tomáš Jakl \and Filippo A. E. Nuccio}
+\title{Stone Duality for Boolean Algebras}
+\author{Sam van Gool}
 
 \begin{document}
 \maketitle
 \input{content}
+
+
+\bibliographystyle{amsplain}
+\bibliography{refs.bib}
 \end{document}

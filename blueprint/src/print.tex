@@ -12,22 +12,47 @@
 
 \documentclass[a4paper]{report}
 
+\usepackage{etoolbox}
+
+\RequirePackage[dvipsnames]{xcolor}
+\RequirePackage{dsfont}
+
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+
 \usepackage{geometry}
 
 \usepackage{expl3}
 
-\usepackage{amssymb, amsthm, mathtools}
 \usepackage[unicode,colorlinks=true,linkcolor=blue,urlcolor=magenta, citecolor=blue]{hyperref}
+\usepackage{cleveref}
 
 \usepackage[warnings-off={mathtools-colon,mathtools-overbracket}]{unicode-math}
+
+% \usepackage[%
+%   autocite     = plain,
+%   backend      = biber,
+%   doi          = true,
+%   url          = true,
+%   giveninits   = true,
+%   hyperref     = true,
+%   maxbibnames  = 99,
+%   maxcitenames = 99,
+%   sortcites    = true,
+%   style        = numeric,
+%   ]{biblatex}
+
 
 \input{macros/common}
 \input{macros/print}
 
-\title{Stone Duality in Lean}
-\author{Dagur Ásgeirsson \and Sam van Gool \and Tomáš Jakl \and Filippo A. E. Nuccio}
+\title{Stone Duality for Boolean Algebras}
+\author{Sam van Gool}
 
 \begin{document}
 \maketitle
 \input{content}
+
+
+\bibliographystyle{amsplain}
+\bibliography{refs.bib}
 \end{document}
