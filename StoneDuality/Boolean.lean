@@ -219,7 +219,7 @@ instance : TotallySeparatedSpace (A ⟶ of Prop) where
         rw [hy, eq_iff_iff, eq_iff_iff, Prop.top_eq_true, Prop.bot_eq_false]
         simpa using em' (z a)
       | isTrue h =>
-        have : x a = ⊤ := top_unique fun a ↦ h
+        have : x a = ⊤ := top_unique fun _ ↦ h
         rw [this]
         have hy : y a = ⊥ := by
           rw [Prop.top_eq_true, eq_iff_iff] at this
@@ -428,8 +428,11 @@ def epsilonObj {X : Profinite} : X ≅ (Profinite.of (BoolAlg.of (Clopens X) ⟶
 
 def epsilon : 𝟭 Profinite ≅ Clp.rightOp ⋙ Spec := by
   refine NatIso.ofComponents (fun X ↦ epsilonObj) ?_
-  -- TODO: prove naturality
-  sorry
+  intro X Y f
+  ext x
+  apply BoundedLatticeHom.ext
+  intro a
+  rfl
 
 -- ## Definition of eta
 def etaObjObjSet {A : BoolAlg} (a : A) :
@@ -464,12 +467,12 @@ def etaObj_real {A : BoolAlg} : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ 
   map_bot' := sorry
 
 -- TODO: I am stuck with all the op's and rightOp's from here on... help
-def etaObj_hom {A : BoolAlgᵒᵖ} : (𝟭 BoolAlgᵒᵖ).toPrefunctor.obj A ⟶ (Spec ⋙ Clp.rightOp).toPrefunctor.obj A := by
+def etaObj_hom {A : BoolAlgᵒᵖ} : (𝟭 BoolAlgᵒᵖ).obj A ⟶ (Spec ⋙ Clp.rightOp).obj A := by
   simp
   have f := @etaObj_real A.unop
   sorry
 
-def etaObj {A : BoolAlgᵒᵖ} : (𝟭 BoolAlgᵒᵖ).toPrefunctor.obj A ≅ (Spec ⋙ Clp.rightOp).toPrefunctor.obj A
+def etaObj {A : BoolAlgᵒᵖ} : (𝟭 BoolAlgᵒᵖ).obj A ≅ (Spec ⋙ Clp.rightOp).obj A
   := by
     refine Iso.mk ?_ ?_ ?_ ?_
     all_goals sorry
