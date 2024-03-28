@@ -3,3 +3,4 @@
 /blueprint/web/
 *.bbl
 *.paux
+/blueprint/lean_decls

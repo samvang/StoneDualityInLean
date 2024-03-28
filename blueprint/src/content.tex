@@ -11,7 +11,7 @@
 
 \chapter{Introduction}
 
-The aim of this note is to give a detailed proof of Stone duality for Boolean
+The aim of this document is to give a detailed proof of Stone duality for Boolean
 algebras \cite{Sto1937BA} to facilitate its formalization in Mathlib. Note that
 Stone actually proved something more general for bounded distributive lattices
 \cite{Sto1937}. (Below, I will cut everything into very small numbered lemmas
@@ -34,9 +34,12 @@ on Boolean spaces.
 A \emph{Boolean algebra} is by definition a bounded distributive lattice with
 complements. This means that it is a structure of the form $(A, \vee, \wedge,
 \zer, \one, \neg)$ satisfying a number of axioms. We do not really care what
-the axioms are precisely. What is important to know is that, for any set $X$,
-the structure $(\mathcal{P}(X), \cup, \cap, \emptyset, X, (-)^{\c})$
-\docref{Data/Set/Basic}{Set.instBooleanAlgebraSet}{is a Boolean algebra}.
+the axioms are precisely. What is important to know is: 
+\begin{lemma}\lean{Set.instBooleanAlgebraSet}\leanok
+    For any set $X$, the structure 
+    $(\mathcal{P}(X), \cup, \cap, \emptyset, X, (-)^{\c})$ 
+    is a Boolean algebra.
+\end{lemma}
 In particular, I write $\mbf{2} = \{ \zer, \one \}$ for the unique two-element
 Boolean algebra; it can be seen that it is a Boolean algebra because it is the
 power set algebra of a singleton set. A Boolean algebra \emph{homomorphism} is
@@ -52,7 +55,7 @@ convenient way for Boolean algebras). An ideal is \emph{proper} if it does not
 contain $\one$. The \emph{partial order} on a Boolean algebra $A$ can be
 defined by $a \leq b$ iff $a \vee b = b$, or equivalently  iff $a \wedge b =
 a$. Our aim is to prove:
-\begin{theorem}
+\begin{theorem}\lean{StoneDuality.Equiv}
     \label{BABoolSpdualeq} 
     The categories $\BoolAlg$ and $\BoolSp$ are dually equivalent.
 \end{theorem}
@@ -69,7 +72,7 @@ thanks to an application of axiom of choice, and it seems like it would be hard
 to work with. I could of course be wrong about this, and implementing this road
 towards the proof might be an interesting alternative experiment. It may have
 the advantage of avoiding getting into the weeds of natural transformation
-arguments as I need to do in \cref{etanat,epsilonnat,triangle} below.
+arguments as I need to do in \cref{etanat,epsilon is natural transformation,triangle} below.
 \end{remark}
 
 \chapter{Two useful facts}
@@ -98,21 +101,26 @@ is in some maximal ideal, but a direct proof is not hard.
     definitions that $x(\neg b) = \neg x(b)$.
 \end{proof}
 
+Recall that a space $X$ is called \emph{totally separated} if, for any distinct $x,y \in X$, there exist disjoint open sets $U, V \subseteq X$ such that $x \in U$ and $y \in V$.
+\begin{lemma}\lean{instTotallySeparatedSpace} \leanok \label{KTDimpliesTotSep}
+    Any compact Hausdorff totally disconnected space is totally separated.
+\end{lemma}
+
+
+\begin{lemma}\lean{isTotallyDisconnected_of_isClopen_set}\leanok
+    Suppose that, for any distinct $x,y \in X$, there exists a clopen set $K \subseteq X$ such that $x \in K$ and $y \not\in K$. Then $X$ is totally disconnected.
+\end{lemma}
+
 The following equivalent definition of Boolean spaces is convenient. 
 
-\begin{lemma}\label{BoolSpchar}
+\begin{proposition}\label{BoolSpchar}
     A compact Hausdorff space $X$ is totally disconnected if, and only if, for
     any distinct $x, y \in X$, there exists a clopen set $K \subseteq X$ such
     that $x \in K$ and $y \not\in K$.
-\end{lemma}
+\end{proposition}
+
 \begin{proof}
-   \docref{Topology/Connected/TotallyDisconnected}{isTotallyDisconnected_of_isClopen_set}{The
-   sufficiency is in Mathlib already}. It is also in Mathlib that a
-   \docref{Topology/Separation}{instTotallySeparatedSpace}{compact
-   Hausdorff totally disconnected space is totally separated}. (Recall that a
-   space $X$ is called \emph{totally separated} if, for any distinct $x,y \in
-   X$, there exist disjoint open sets $U, V \subseteq X$ such that $x \in U$
-   and $y \in V$.) Finally, in any totally separated space, one may actually
+    Finally, in any totally separated space, one may actually
    separate distinct points by clopens, and
    \docref{Topology/Connected/TotallyDisconnected}
    {exists_isClopen_of_totally_separated}{this is also in Mathlib}.
@@ -145,16 +153,14 @@ $\Clp \colon \BoolSp \to \BoolAlg$ and $\Spec \colon \BoolAlg \to \BoolSp$.
 If $X$ is a Boolean space, write $\Clp(X)$ for the set of clopen
 subsets of $X$. 
 
-\begin{proposition}\label{clpwelldef}
+\begin{proposition}\label{clpwelldef}\lean{TopologicalSpace.Clopens.instBooleanAlgebraClopens}\leanok
     $\Clp(X)$ is a Boolean subalgebra of the Boolean algebra $\mathcal{P}(X)$.
 \end{proposition}
 \begin{proof}
     Finite unions and complements of clopen sets are clopen, and the empty set
     is clopen.
-    \docref{Topology/Sets/Closeds}{TopologicalSpace.Clopens.instBooleanAlgebraClopens}{This
-    is in Mathlib}.
 \end{proof} 
-\begin{proposition}\label{clpmorphism}
+\begin{proposition}\label{clpmorphism}\lean{StoneDuality.Clp}\leanok
     If $f \colon X \to Y$ is a continuous function between Boolean spaces, then
     $f^{-1} \colon \Clp(Y) \to \Clp(X)$ is a Boolean algebra homomorphism.
 \end{proposition}
@@ -392,7 +398,7 @@ The function $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
     from a compact to a Hausdorff space.
 \end{proof}
 
-\begin{proposition}\label{etanat}
+\begin{proposition}\label{eta is natural transformation}\lean{StoneDuality.eta}
     The assignment $A \mapsto \eta_A$ is a natural transformation from the
     identity functor on $\BoolAlg$ to the functor $\Clp \circ \Spec$.
 \end{proposition}
@@ -406,7 +412,7 @@ The function $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
     \Spec)(h)(\eta_A(a))$, as required.
 \end{proof}
 
-\begin{proposition}\label{epsilonnat}
+\begin{proposition}\label{epsilon is natural transformation}\lean{StoneDuality.epsilon}
     The assignment $X \mapsto \epsilon_X$ is a natural transformation from the
     identity functor on $\BoolSp$ to the functor $\Spec \circ \Clp$.
 \end{proposition}
@@ -420,13 +426,13 @@ The function $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
     and $\Clp$ on morphisms. Thus, $\xi_1 = \xi_2$.
 \end{proof}
 
-According to
-\docref{CategoryTheory/Equivalence}{CategoryTheory.Equivalence}{the
-definition of categorical equivalence in Mathlib}, we finally need to prove one
+\begin{remark}\lean{CategoryTheory.Equivalence}\leanok
+According to the definition of categorical equivalence in Mathlib, we finally need to prove one
 of the triangle laws for the natural isomorphisms $\eta$ and $\epsilon$, namely
 the one that says that the composite natural transformation $\Spec \Rightarrow
 \Spec \Clp \Spec \Rightarrow \Spec$ is the identity.
-\begin{proposition}\label{triangle}
+\end{remark}
+\begin{proposition}\label{triangle}\lean{StoneDuality.triangle}
     The triangle law for $\eta$ and $\epsilon$ holds. 
 \end{proposition}
 \begin{proof}
