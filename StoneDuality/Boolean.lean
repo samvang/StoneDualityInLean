@@ -1,9 +1,8 @@
 import Mathlib.Topology.Category.Profinite.Basic
 import Mathlib.Order.Category.BoolAlg
 import StoneDuality.HomClosed
-
 import Mathlib.Topology.Sets.Closeds
-import Mathlib.Topology.Compactness.Compact
+-- import Mathlib.Topology.Compactness.Compact
 
 open CategoryTheory TopologicalSpace
 
@@ -280,8 +279,7 @@ lemma preimage_epsilonObjObj_eq {X : Profinite} (a : Clopens X) :
 def epsilonCont {X : Profinite} : ContinuousMap X (Profinite.of
    (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) where
      toFun := epsilonObjObj
-     continuous_toFun :=
-      by
+     continuous_toFun := by
       let A := BoolAlg.of (Clopens X)
       let hB := basis_is_basis A
       rw [TopologicalSpace.IsTopologicalBasis.continuous_iff hB]
@@ -301,13 +299,33 @@ lemma coerce_bijective [TopologicalSpace X] [TopologicalSpace Y] (f : Continuous
 theorem BoundedLatticeHom.ext_iff {α β : Type*} [Lattice α] [Lattice β] [BoundedOrder α] [BoundedOrder β] {f g : BoundedLatticeHom α β } : f = g ↔ ∀ x, f x = g x :=
   DFunLike.ext_iff
 
+
+-- this is proved in a newer version of Mathlib
+theorem IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed' {X : Type u} [TopologicalSpace X]
+    {S : Set (Set X)} [hS : Nonempty S] (hSd : DirectedOn (· ⊇ ·) S) (hSn : ∀ U ∈ S, U.Nonempty)
+    (hSc : ∀ U ∈ S, IsCompact U) (hScl : ∀ U ∈ S, IsClosed U) : (⋂₀ S).Nonempty := by sorry
+
+-- HELP
+theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of (Clopens ↑X.toCompHaus.toTop) ⟶ BoolAlg.of Prop)).toCompHaus.toTop) (h : F.toFun = G.toFun) : F = G := by sorry
+
+-- A bounded lattice homomorphism of Boolean algebras preserves negation.
+-- theorem map_neg_of_bddlathom {A B : BoolAlg} (f : A ⟶ B) (a : A) : f (¬ a) = ¬ f a := by sorry
+
 --TODO: prove surjectivity
-lemma epsilonSurj {X : Profinite }: Function.Surjective (@epsilonCont X).toFun := by
+lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun := by
     intro F
-    let Fclp : Set (Clopens X) := (F.toFun)⁻¹' {True}
+    set Fclp : Set (Clopens X) := (F.toFun)⁻¹' {True} with Fclpeq
     set asSets : Set (Set X) := Clopens.Simps.coe '' Fclp with hClp
     set K : Set X := Set.sInter asSets with Keq
-
+    haveI : Nonempty asSets := by
+      use Set.univ
+      rw [hClp]
+      use ⊤
+      simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+        Set.preimage_singleton_true, Set.mem_image, Set.mem_setOf_eq]
+      constructor
+      have : F.toFun ⊤ := by simp; sorry
+      sorry
     have hK : IsClosed K := by
       rw[Keq]
       apply isClosed_sInter
@@ -316,16 +334,57 @@ lemma epsilonSurj {X : Profinite }: Function.Surjective (@epsilonCont X).toFun :
       intro a ha
       exact a.2.1
     have Xiscompact := X.toCompHaus.is_compact.isCompact_univ
-    -- have Xiscompact : IsCompact (X.univ) := by sorry
 
     have hSd : DirectedOn (fun (x x_1 : Set X) => x ⊇ x_1) asSets := by sorry
     have hSn : ∀ U ∈ asSets, Set.Nonempty U := by sorry
     have hSc : ∀ U ∈ asSets, IsCompact U := by sorry
     have hScl : ∀ U ∈ asSets, IsClosed U := by sorry
 
-    -- have lem := Xiscompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed hSd hSn hSc hScl
-    have Kne : K.Nonempty := by sorry
-    sorry
+    have Kne : K.Nonempty := by
+      refine IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed' hSd hSn hSc hScl
+    obtain ⟨x, hx⟩ := Kne
+    use x
+    simp only [epsilonCont, epsilonObjObj]
+    apply coercionhell
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of]
+    ext L
+
+    have UinF_implies_xinU (U : Clopens X) (h : F.toFun U) : x ∈ U := by
+      have : K ⊆ U := by
+        rw[Keq, hClp]
+        apply Set.sInter_subset_of_mem
+        simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+          Set.preimage_singleton_true, Set.mem_image, Set.mem_setOf_eq]
+        use U
+        exact ⟨h, by trivial⟩
+      exact this hx
+
+    have key (U : Clopens X) : U ∈ Fclp ↔ x ∈ U := by
+      rw [Fclpeq]
+      simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+        Set.preimage_singleton_true, Set.mem_setOf_eq]
+      constructor
+      · apply UinF_implies_xinU
+      · intro h
+        by_contra hnot
+        have UcompinF : F.toFun (Uᶜ : Clopens X) := by sorry
+        have := UinF_implies_xinU (Uᶜ) UcompinF
+        exact this h
+
+    constructor
+    · intro hxL
+      rw [← key, Fclpeq] at hxL
+      simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+        Set.preimage_singleton_true, Set.mem_setOf_eq] at hxL
+      exact hxL
+    · intro hFL
+      rw [← key]
+      rw [Fclpeq]
+      simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+        Set.preimage_singleton_true, Set.mem_setOf_eq]
+      exact hFL
+
+
 
 
 def epsilonObj {X : Profinite} : X ≅ (Profinite.of (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) :=
