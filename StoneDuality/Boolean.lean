@@ -305,8 +305,23 @@ theorem IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed' {X : 
     {S : Set (Set X)} [hS : Nonempty S] (hSd : DirectedOn (· ⊇ ·) S) (hSn : ∀ U ∈ S, U.Nonempty)
     (hSc : ∀ U ∈ S, IsCompact U) (hScl : ∀ U ∈ S, IsClosed U) : (⋂₀ S).Nonempty := by sorry
 
+
+-- TODO: add to Profinite/Basic
+@[simp]
+lemma Profinite.coe_of (X : Type*) [TopologicalSpace X] [CompactSpace X] [T2Space X]
+    [TotallyDisconnectedSpace X] : (Profinite.of X).toCompHaus = CompHaus.of X :=
+  rfl
+
 -- HELP
-theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of (Clopens ↑X.toCompHaus.toTop) ⟶ BoolAlg.of Prop)).toCompHaus.toTop) (h : F.toFun = G.toFun) : F = G := by sorry
+theorem coercionhell {X : Profinite} (F G :
+↑(Profinite.of (BoolAlg.of (Clopens ↑X.toCompHaus.toTop) ⟶ BoolAlg.of Prop)).toCompHaus.toTop)
+(h : F.toFun = G.toFun) : F = G := by
+  dsimp only [Profinite.coe_of, CompHaus.coe_of]
+  ext x
+  rw [Function.funext_iff] at h
+  exact h x
+
+
 
 -- A bounded lattice homomorphism of Boolean algebras preserves negation.
 -- theorem map_neg_of_bddlathom {A B : BoolAlg} (f : A ⟶ B) (a : A) : f (¬ a) = ¬ f a := by sorry
@@ -351,6 +366,7 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
     obtain ⟨x, hx⟩ := Kne
     use x
     simp only [epsilonCont, epsilonObjObj]
+    dsimp only [Profinite.coe_of, CompHaus.coe_of]
     apply coercionhell
     simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of]
     ext L
