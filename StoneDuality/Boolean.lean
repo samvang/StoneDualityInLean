@@ -451,7 +451,7 @@ lemma supeqtop (a b : Prop) : a ⊔ b = ⊤ ↔ a = ⊤ ∨ b = ⊤ := by
   rw [Prop.top_eq_true]
   simp only [sup_Prop_eq, eq_iff_iff, iff_true]
 
-def etaObj_real {A : BoolAlg} : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
+def etaObj_real (A : BoolAlg) : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
   toFun := etaObjObj
   map_sup' := by
     intros a b
@@ -466,33 +466,100 @@ def etaObj_real {A : BoolAlg} : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ 
   map_top' := sorry
   map_bot' := sorry
 
--- TODO: I am stuck with all the op's and rightOp's from here on... help
-def etaObj_hom {A : BoolAlgᵒᵖ} : (𝟭 BoolAlgᵒᵖ).obj A ⟶ (Spec ⋙ Clp.rightOp).obj A := by
-  simp
-  have f := @etaObj_real A.unop
-  sorry
+lemma etaObj_real_bijective (A : BoolAlg) : Function.Bijective (etaObj_real A) := sorry
 
-def etaObj {A : BoolAlgᵒᵖ} : (𝟭 BoolAlgᵒᵖ).obj A ≅ (Spec ⋙ Clp.rightOp).obj A
-  := by
-    refine Iso.mk ?_ ?_ ?_ ?_
-    all_goals sorry
+/--
+This is used in the blueprint, doesn't seem to be in mathlib. Probably easiest to construct using
+`BoolAlg.Iso.mk`.
+-/
+lemma BoolAlg.iso_of_bijective {A B : BoolAlg} (f : A ⟶ B) (hf : Function.Bijective f) : A ≅ B where
+  hom := f
+  inv := sorry
+  hom_inv_id := sorry
+  inv_hom_id := sorry
 
-def eta : 𝟭 BoolAlgᵒᵖ ≅ Spec ⋙ Clp.rightOp := by
-  refine NatIso.ofComponents (fun A ↦ etaObj) ?_
-  sorry
+def etaObj_real_iso (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
+  BoolAlg.iso_of_bijective (etaObj_real A) (etaObj_real_bijective A)
+  -- BoolAlg.Iso.mk (etaObj_real_orderIso A)
 
+def etaObj (A : BoolAlgᵒᵖ) : (Spec ⋙ Clp.rightOp).obj A ≅ (𝟭 BoolAlgᵒᵖ).obj A :=
+  (etaObj_real_iso A.unop).op
+
+def eta : Spec ⋙ Clp.rightOp ≅ 𝟭 BoolAlgᵒᵖ := by
+  refine NatIso.ofComponents (fun A ↦ etaObj A) ?_
+  intro X Y ⟨f⟩
+  simp [etaObj]
+  change _ = _ ≫ f.op
+  simp only [← op_comp]
+  congr 1
+  simp [etaObj_real_iso]
+  unfold BoolAlg.iso_of_bijective
+  change (etaObj_real Y.unop) ≫ _ = f ≫ etaObj_real X.unop
+  apply BoundedLatticeHom.ext
+  intro a
+  rfl
+
+section
+
+/-!
+This approach might also work, but if the above works, ignore this.
+-/
+
+def etaObj_real_orderIso (A : BoolAlg) : A ≃o (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
+  toFun := etaObjObj
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+  map_rel_iff' := sorry
+
+def etaObj_real_iso' (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
+  BoolAlg.Iso.mk (etaObj_real_orderIso A)
+
+-- etc.
+
+end
 
 theorem triangle : ∀ (X : Profinite),
-  Clp.rightOp.map (epsilon.hom.app X) ≫ eta.symm.hom.app (Clp.rightOp.obj X) =
+  Clp.rightOp.map (epsilon.hom.app X) ≫ eta.hom.app (Clp.rightOp.obj X) =
     𝟙 (Clp.rightOp.obj X) := by
     intro X
+    simp [eta, etaObj, etaObj_real_iso]
+    unfold BoolAlg.iso_of_bijective
+    change _ ≫ (etaObj_real _).op = _
+    rw [← op_comp]
+    change _ = (𝟙 _).op
+    congr 1
+    apply BoundedLatticeHom.ext
+    intro a
+    let f := Clp.map (epsilon.hom.app X).op
+    let g := etaObj_real (BoolAlg.of (Clopens X))
+    -- change f (g x) = x
+    let y := g a
+    erw [id_apply, comp_apply]
+    simp
+    ext x
     sorry
+    -- This is a different triangle law from what's proved in the blueprint
 
 def Equiv : Profinite ≌ BoolAlgᵒᵖ where
   functor := Clp.rightOp
   inverse := Spec
   unitIso := epsilon
-  counitIso := eta.symm
-  functor_unitIso_comp := triangle
+  counitIso := eta
+  functor_unitIso_comp := sorry
+
+/-
+If we don't care whether `epsilon` and `eta` are actually the unit/counit of this adjoint
+equivalence, then we don't need to prove the triangle law, and can use the following approach
+instead:
+-/
+
+def Equiv' : Profinite ≌ BoolAlgᵒᵖ := CategoryTheory.Equivalence.mk Clp.rightOp Spec epsilon eta
+
+theorem equiv'_functor : Equiv'.functor = Clp.rightOp := rfl
+
+theorem equiv'_inverse : Equiv'.inverse = Spec := rfl
+
+
 
 end StoneDuality
