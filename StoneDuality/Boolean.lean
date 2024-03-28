@@ -1,8 +1,6 @@
 import Mathlib.Topology.Category.Profinite.Basic
 import Mathlib.Order.Category.BoolAlg
 import StoneDuality.HomClosed
-import Mathlib.Topology.Sets.Closeds
--- import Mathlib.Topology.Compactness.Compact
 
 open CategoryTheory TopologicalSpace
 
@@ -135,16 +133,16 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
       · rintro ⟨x, rfl⟩
         simp only [Bool.decide_coe, Set.mem_inter_iff,
           Set.mem_iInter, Set.mem_setOf_eq, emb, map_sup, map_inf, map_top, decide_eq_true_eq,
-          map_bot, decide_eq_false_iff_not]
+          map_bot, decide_eq_false_iff_not, J, I, T, B]
         rw [Prop.top_eq_true, Prop.bot_eq_false]
         simp only [and_true, not_false_eq_true]
         refine ⟨fun a b ↦ ?_, fun a b ↦ ?_⟩
         all_goals congr
       · intro ⟨⟨⟨h_map_sup, h_map_inf⟩, h_map_top⟩, h_map_bot⟩
         refine ⟨⟨⟨⟨fun a ↦ (x a : Prop), ?_⟩, ?_⟩, ?_, ?_⟩, ?_⟩
-        · simp only [Set.mem_iInter, Set.mem_setOf_eq] at h_map_sup
+        · simp only [Set.mem_iInter, Set.mem_setOf_eq, J, I, T, B] at h_map_sup
           simp [h_map_sup]
-        · simp only [Set.mem_iInter, Set.mem_setOf_eq] at h_map_inf
+        · simp only [Set.mem_iInter, Set.mem_setOf_eq, J, I, T, B] at h_map_inf
           simp [h_map_inf]
         · simpa [Prop.top_eq_true] using h_map_top
         · simpa [Prop.bot_eq_false] using h_map_bot
@@ -156,10 +154,10 @@ theorem closedEmbedding_emb : ClosedEmbedding (emb A) := by
     rw [this]
     refine IsClosed.inter (IsClosed.inter (IsClosed.inter ?_ ?_) ?_) ?_
     · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
-      simp only [Bool.decide_or, Bool.decide_coe]
+      simp only [Bool.decide_or, Bool.decide_coe, J, I, T, B]
       exact (IsClosed_PreserveBinary_T2 i j (Sup.sup) (or) (by continuity))
     · refine isClosed_iInter (fun i ↦ isClosed_iInter (fun j ↦ ?_))
-      simp only [Bool.decide_and, Bool.decide_coe]
+      simp only [Bool.decide_and, Bool.decide_coe, J, I, T, B]
       exact (IsClosed_PreserveBinary_T2 i j (Inf.inf) (and) (by continuity))
     · exact (IsClosed_PreserveNullary_T1 ⊤ true)
     · exact (IsClosed_PreserveNullary_T1 ⊥ false)
@@ -190,7 +188,7 @@ lemma mem_basis (p : Prop) : {x : A ⟶ of Prop | x a = p} ∈ basis A := by
 instance : CompactSpace (A ⟶ of Prop) where
   isCompact_univ := by
     let K := Set.range (emb A)
-    have hK : IsCompact K := (closedEmbedding_emb A).closed_range.isCompact
+    have hK : IsCompact K := (closedEmbedding_emb A).isClosed_range.isCompact
     rw [← Set.preimage_range]
     exact (closedEmbedding_emb A).isCompact_preimage hK
 
@@ -219,7 +217,7 @@ instance : TotallySeparatedSpace (A ⟶ of Prop) where
         rw [hy, eq_iff_iff, eq_iff_iff, Prop.top_eq_true, Prop.bot_eq_false]
         simpa using em' (z a)
       | isTrue h =>
-        have : x a = ⊤ := top_unique fun a ↦ h
+        have : x a = ⊤ := top_unique fun _ ↦ h
         rw [this]
         have hy : y a = ⊥ := by
           rw [Prop.top_eq_true, eq_iff_iff] at this
@@ -288,23 +286,16 @@ def epsilonCont {X : Profinite} : ContinuousMap X (Profinite.of
         eq_iff_iff, Set.mem_range] at hU
       obtain ⟨a, ha⟩ := hU
       simp_rw [← ha]
-      have : (epsilonObjObj ⁻¹' {x | x.toLatticeHom a ↔ ⊤}) = a := Set.ext fun _ ↦ iff_true_iff
+      have : (epsilonObjObj ⁻¹' {x | x.toLatticeHom a ↔ ⊤}) = _ := Set.ext fun _ ↦ iff_true_iff
       erw [this]
       exact (Clopens.isClopen a).2
 
--- TODO move somewhere?
+-- TODO move somewhere else
 lemma coerce_bijective [TopologicalSpace X] [TopologicalSpace Y] (f : ContinuousMap X Y) (h : Function.Bijective f.toFun) : Function.Bijective f := by constructor; exact h.1; exact h.2
 
 -- TODO move to Order/Hom/Lattice.lean
 theorem BoundedLatticeHom.ext_iff {α β : Type*} [Lattice α] [Lattice β] [BoundedOrder α] [BoundedOrder β] {f g : BoundedLatticeHom α β } : f = g ↔ ∀ x, f x = g x :=
   DFunLike.ext_iff
-
-
--- this is proved in a newer version of Mathlib
-theorem IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed' {X : Type u} [TopologicalSpace X]
-    {S : Set (Set X)} [hS : Nonempty S] (hSd : DirectedOn (· ⊇ ·) S) (hSn : ∀ U ∈ S, U.Nonempty)
-    (hSc : ∀ U ∈ S, IsCompact U) (hScl : ∀ U ∈ S, IsClosed U) : (⋂₀ S).Nonempty := by sorry
-
 
 -- TODO: add to Profinite/Basic
 @[simp]
@@ -312,6 +303,7 @@ lemma Profinite.coe_of (X : Type*) [TopologicalSpace X] [CompactSpace X] [T2Spac
     [TotallyDisconnectedSpace X] : (Profinite.of X).toCompHaus = CompHaus.of X :=
   rfl
 
+-- TODO: integrate this somewhere
 -- HELP
 theorem coercionhell {X : Profinite} (F G :
 ↑(Profinite.of (BoolAlg.of (Clopens ↑X.toCompHaus.toTop) ⟶ BoolAlg.of Prop)).toCompHaus.toTop)
@@ -323,13 +315,12 @@ theorem coercionhell {X : Profinite} (F G :
 
 
 
--- A bounded lattice homomorphism of Boolean algebras preserves negation.
+-- TODO: A bounded lattice homomorphism of Boolean algebras preserves negation.
 -- theorem map_neg_of_bddlathom {A B : BoolAlg} (f : A ⟶ B) (a : A) : f (¬ a) = ¬ f a := by sorry
 
---TODO: prove surjectivity
 
--- TODO I didn't feel like searching in the library again
-lemma contrapose (A B : Prop) : (A → B) → (¬ B → ¬ A) := fun h a a_1 ↦ a (h a_1)
+-- TODO: I didn't feel like searching in the library again
+-- lemma contrapose (A B : Prop) : (A → B) → (¬ B → ¬ A) := fun h a a_1 ↦ a (h a_1)
 
 lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun := by
     intro F
@@ -342,8 +333,10 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
       use ⊤
       constructor
       have : F.toFun ⊤ := by rw [F.map_top']; trivial
+      rw [Fclpeq]
       simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
-        Set.preimage_singleton_true, Set.mem_setOf_eq]
+        SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom, BoundedLatticeHom.coe_toLatticeHom,
+        Set.preimage_singleton_true, Set.mem_setOf_eq, map_top]
       trivial
       trivial
 
@@ -362,7 +355,7 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
     have hScl : ∀ U ∈ asSets, IsClosed U := by sorry
 
     have Kne : K.Nonempty := by
-      refine IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed' hSd hSn hSc hScl
+      refine IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed hSd hSn hSc hScl
     obtain ⟨x, hx⟩ := Kne
     use x
     simp only [epsilonCont, epsilonObjObj]
@@ -378,6 +371,10 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
         simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
           Set.preimage_singleton_true, Set.mem_image, Set.mem_setOf_eq]
         use U
+        rw [Fclpeq]
+        simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+          SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom, BoundedLatticeHom.coe_toLatticeHom,
+          Set.preimage_singleton_true, Set.mem_setOf_eq]
         exact ⟨h, by trivial⟩
       exact this hx
 
@@ -388,11 +385,6 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
       constructor
       · apply inF_implies_xin
       · intro h
-
-        -- by_contra hnot
-        -- have UcompinF : F.toFun (Uᶜ : Clopens X) :=  by
-
-        --   sorry -- because F preserves negation
         have := inF_implies_xin (Uᶜ)
         sorry
 
@@ -411,9 +403,6 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
       simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
         Set.preimage_singleton_true, Set.mem_setOf_eq]
       exact hFL
-
-
-
 
 def epsilonObj {X : Profinite} : X ≅ (Profinite.of (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) :=
   by
