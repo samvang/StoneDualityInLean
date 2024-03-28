@@ -3,6 +3,7 @@ import Mathlib.Order.Category.BoolAlg
 import StoneDuality.HomClosed
 
 import Mathlib.Topology.Sets.Closeds
+import Mathlib.Topology.Compactness.Compact
 
 open CategoryTheory TopologicalSpace
 
@@ -300,6 +301,33 @@ lemma coerce_bijective [TopologicalSpace X] [TopologicalSpace Y] (f : Continuous
 theorem BoundedLatticeHom.ext_iff {α β : Type*} [Lattice α] [Lattice β] [BoundedOrder α] [BoundedOrder β] {f g : BoundedLatticeHom α β } : f = g ↔ ∀ x, f x = g x :=
   DFunLike.ext_iff
 
+--TODO: prove surjectivity
+lemma epsilonSurj {X : Profinite }: Function.Surjective (@epsilonCont X).toFun := by
+    intro F
+    let Fclp : Set (Clopens X) := (F.toFun)⁻¹' {True}
+    set asSets : Set (Set X) := Clopens.Simps.coe '' Fclp with hClp
+    set K : Set X := Set.sInter asSets with Keq
+
+    have hK : IsClosed K := by
+      rw[Keq]
+      apply isClosed_sInter
+      rw [hClp]
+      simp
+      intro a ha
+      exact a.2.1
+    have Xiscompact := X.toCompHaus.is_compact.isCompact_univ
+    -- have Xiscompact : IsCompact (X.univ) := by sorry
+
+    have hSd : DirectedOn (fun (x x_1 : Set X) => x ⊇ x_1) asSets := by sorry
+    have hSn : ∀ U ∈ asSets, Set.Nonempty U := by sorry
+    have hSc : ∀ U ∈ asSets, IsCompact U := by sorry
+    have hScl : ∀ U ∈ asSets, IsClosed U := by sorry
+
+    -- have lem := Xiscompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed hSd hSn hSc hScl
+    have Kne : K.Nonempty := by sorry
+    sorry
+
+
 def epsilonObj {X : Profinite} : X ≅ (Profinite.of (BoolAlg.of (Clopens X) ⟶ (BoolAlg.of Prop))) :=
   by
   refine Profinite.isoOfBijective epsilonCont ?_
@@ -317,8 +345,8 @@ def epsilonObj {X : Profinite} : X ≅ (Profinite.of (BoolAlg.of (Clopens X) ⟶
     push_neg
     left
     exact hK.2
-  · --TODO: prove surjectivity
-    sorry
+  · exact epsilonSurj
+
 
 def epsilon : 𝟭 Profinite ≅ Clp.rightOp ⋙ Spec := by
   refine NatIso.ofComponents (fun X ↦ epsilonObj) ?_
