@@ -240,7 +240,7 @@ instance : TotallySeparatedSpace (A ⟶ of Prop) where
       rw [hxz] at hyz
       exact ha hyz
 
--- Is this really not in mathlib?
+-- Added to mathlib in #11449 (merged)
 instance TotallySeparatedSpace.t2Space (α : Type*) [TopologicalSpace α] [TotallySeparatedSpace α] :
     T2Space α where
   t2 x y h := by
@@ -267,10 +267,10 @@ def Spec : BoolAlgᵒᵖ ⥤ Profinite where
 def epsilonObjObj {X : Profinite} (x : X) : BoundedLatticeHom (Clopens X) Prop
 where
   toFun := fun K ↦ (x ∈ K)
-  map_sup' := by intros; rfl
-  map_inf' := by intros; rfl
-  map_top' := by intros; rfl
-  map_bot' := by intros; rfl
+  map_sup' _ _ := rfl
+  map_inf' _ _ := rfl
+  map_top' := rfl
+  map_bot' := rfl
 
 lemma preimage_epsilonObjObj_eq {X : Profinite} (a : Clopens X) :
   (epsilonObjObj ⁻¹' {x | x.toLatticeHom a ↔ ⊤}) = a := Set.ext fun _ ↦ iff_true_iff
@@ -293,10 +293,13 @@ def epsilonCont {X : Profinite} : ContinuousMap X (Profinite.of
       exact (Clopens.isClopen a).2
 
 -- TODO move somewhere?
-lemma coerce_bijective [TopologicalSpace X] [TopologicalSpace Y] (f : ContinuousMap X Y) (h : Function.Bijective f.toFun) : Function.Bijective f := by constructor; exact h.1; exact h.2
+lemma coerce_bijective [TopologicalSpace X] [TopologicalSpace Y] (f : ContinuousMap X Y)
+    (h : Function.Bijective f.toFun) : Function.Bijective f := by
+  constructor; exact h.1; exact h.2
 
 -- TODO move to Order/Hom/Lattice.lean
-theorem BoundedLatticeHom.ext_iff {α β : Type*} [Lattice α] [Lattice β] [BoundedOrder α] [BoundedOrder β] {f g : BoundedLatticeHom α β } : f = g ↔ ∀ x, f x = g x :=
+theorem BoundedLatticeHom.ext_iff {α β : Type*} [Lattice α] [Lattice β] [BoundedOrder α]
+    [BoundedOrder β] {f g : BoundedLatticeHom α β } : f = g ↔ ∀ x, f x = g x :=
   DFunLike.ext_iff
 
 
@@ -305,8 +308,12 @@ theorem IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed' {X : 
     {S : Set (Set X)} [hS : Nonempty S] (hSd : DirectedOn (· ⊇ ·) S) (hSn : ∀ U ∈ S, U.Nonempty)
     (hSc : ∀ U ∈ S, IsCompact U) (hScl : ∀ U ∈ S, IsClosed U) : (⋂₀ S).Nonempty := by sorry
 
--- HELP
-theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of (Clopens ↑X.toCompHaus.toTop) ⟶ BoolAlg.of Prop)).toCompHaus.toTop) (h : F.toFun = G.toFun) : F = G := by sorry
+theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of
+    (Clopens ↑X.toCompHaus.toTop) ⟶ BoolAlg.of Prop)).toCompHaus.toTop)
+    (h : F.toFun = G.toFun) : F = G := by
+  apply BoundedLatticeHom.ext
+  intro a
+  exact congrFun h a
 
 -- A bounded lattice homomorphism of Boolean algebras preserves negation.
 -- theorem map_neg_of_bddlathom {A B : BoolAlg} (f : A ⟶ B) (a : A) : f (¬ a) = ¬ f a := by sorry
