@@ -312,6 +312,10 @@ theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of (Clopen
 -- theorem map_neg_of_bddlathom {A B : BoolAlg} (f : A ⟶ B) (a : A) : f (¬ a) = ¬ f a := by sorry
 
 --TODO: prove surjectivity
+
+-- TODO I didn't feel like searching in the library again
+lemma contrapose (A B : Prop) : (A → B) → (¬ B → ¬ A) := fun h a a_1 ↦ a (h a_1)
+
 lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun := by
     intro F
     set Fclp : Set (Clopens X) := (F.toFun)⁻¹' {True} with Fclpeq
@@ -321,11 +325,13 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
       use Set.univ
       rw [hClp]
       use ⊤
-      simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
-        Set.preimage_singleton_true, Set.mem_image, Set.mem_setOf_eq]
       constructor
-      have : F.toFun ⊤ := by simp; sorry
-      sorry
+      have : F.toFun ⊤ := by rw [F.map_top']; trivial
+      simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+        Set.preimage_singleton_true, Set.mem_setOf_eq]
+      trivial
+      trivial
+
     have hK : IsClosed K := by
       rw[Keq]
       apply isClosed_sInter
@@ -349,7 +355,7 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
     simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of]
     ext L
 
-    have UinF_implies_xinU (U : Clopens X) (h : F.toFun U) : x ∈ U := by
+    have inF_implies_xin (U : Clopens X) (h : F.toFun U) : x ∈ U := by
       have : K ⊆ U := by
         rw[Keq, hClp]
         apply Set.sInter_subset_of_mem
@@ -364,12 +370,18 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
       simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
         Set.preimage_singleton_true, Set.mem_setOf_eq]
       constructor
-      · apply UinF_implies_xinU
+      · apply inF_implies_xin
       · intro h
-        by_contra hnot
-        have UcompinF : F.toFun (Uᶜ : Clopens X) := by sorry
-        have := UinF_implies_xinU (Uᶜ) UcompinF
-        exact this h
+
+        -- by_contra hnot
+        -- have UcompinF : F.toFun (Uᶜ : Clopens X) :=  by
+
+        --   sorry -- because F preserves negation
+        have := inF_implies_xin (Uᶜ)
+        sorry
+
+
+        -- exact this
 
     constructor
     · intro hxL
