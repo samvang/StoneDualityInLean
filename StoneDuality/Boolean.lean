@@ -31,7 +31,6 @@ def basis : Set (Set (A ⟶ of Prop)) :=
   Set.range U
 
 instance instTopHomBoolAlgProp : TopologicalSpace (A ⟶ of Prop) := generateFrom <| basis A
-  --induced (fun f ↦ (f : A → Prop)) (Pi.topologicalSpace (t₂ := fun _ ↦ ⊥))
 
 theorem basis_is_basis : IsTopologicalBasis (basis A) where
   exists_subset_inter := by
@@ -239,6 +238,7 @@ instance : TotallySeparatedSpace (A ⟶ of Prop) where
       exact ha hyz
 
 -- Added to mathlib in #11449 (merged)
+-- TODO: refer to the mathlib instance instead
 instance TotallySeparatedSpace.t2Space (α : Type*) [TopologicalSpace α] [TotallySeparatedSpace α] :
     T2Space α where
   t2 x y h := by
@@ -308,9 +308,6 @@ lemma Profinite.coe_of (X : Type*) [TopologicalSpace X] [CompactSpace X] [T2Spac
   rfl
 
 
-theorem IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed' {X : Type u} [TopologicalSpace X]
-    {S : Set (Set X)} [hS : Nonempty S] (hSd : DirectedOn (· ⊇ ·) S) (hSn : ∀ U ∈ S, U.Nonempty)
-    (hSc : ∀ U ∈ S, IsCompact U) (hScl : ∀ U ∈ S, IsClosed U) : (⋂₀ S).Nonempty := by sorry
 
 theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of
     (Clopens ↑X.toCompHaus.toTop) ⟶ BoolAlg.of Prop)).toCompHaus.toTop)
@@ -322,10 +319,6 @@ theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of
 
 -- TODO: A bounded lattice homomorphism of Boolean algebras preserves negation.
 -- theorem map_neg_of_bddlathom {A B : BoolAlg} (f : A ⟶ B) (a : A) : f (¬ a) = ¬ f a := by sorry
-
-
--- TODO: I didn't feel like searching in the library again
--- lemma contrapose (A B : Prop) : (A → B) → (¬ B → ¬ A) := fun h a a_1 ↦ a (h a_1)
 
 lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun := by
     intro F
@@ -522,7 +515,10 @@ def etaObj_real_iso' (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A
 
 end
 
-theorem triangle : ∀ (X : Profinite),
+/- If we want to know that `epsilon` and `eta` are actually the unit and counit of
+   this equivalence, then we need to prove: -/
+
+/- theorem triangle : ∀ (X : Profinite),
   Clp.rightOp.map (epsilon.hom.app X) ≫ eta.hom.app (Clp.rightOp.obj X) =
     𝟙 (Clp.rightOp.obj X) := by
     intro X
@@ -550,19 +546,18 @@ def Equiv : Profinite ≌ BoolAlgᵒᵖ where
   unitIso := epsilon
   counitIso := eta
   functor_unitIso_comp := sorry
-
+-/
 /-
 If we don't care whether `epsilon` and `eta` are actually the unit/counit of this adjoint
 equivalence, then we don't need to prove the triangle law, and can use the following approach
 instead:
 -/
 
-def Equiv' : Profinite ≌ BoolAlgᵒᵖ := CategoryTheory.Equivalence.mk Clp.rightOp Spec epsilon eta
+def Equiv : Profinite ≌ BoolAlgᵒᵖ := CategoryTheory.Equivalence.mk Clp.rightOp Spec epsilon eta
 
-theorem equiv'_functor : Equiv'.functor = Clp.rightOp := rfl
+theorem equiv_functor : Equiv.functor = Clp.rightOp := rfl
 
-theorem equiv'_inverse : Equiv'.inverse = Spec := rfl
-
+theorem equiv_inverse : Equiv.inverse = Spec := rfl
 
 
 end StoneDuality
