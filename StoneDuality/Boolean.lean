@@ -349,7 +349,15 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
 
     have hSd : DirectedOn (fun (x x_1 : Set X) => x ⊇ x_1) asSets := by sorry
     have hSn : ∀ U ∈ asSets, Set.Nonempty U := by sorry
-    have hSc : ∀ U ∈ asSets, IsCompact U := by sorry
+
+    have hSc : ∀ U ∈ asSets, IsCompact U := by
+      rw [hClp]
+      intro U hU
+      apply IsClosed.isCompact
+      apply IsClopen.isClosed
+      let ⟨⟨U_shadow, r⟩, ⟨ hl, hr⟩ ⟩ := hU
+      sorry -- TODO just make use of the fact that U_shadow is Clopen and coerces to U somehow...
+
     have hScl : ∀ U ∈ asSets, IsClosed U := by sorry
 
     have Kne : K.Nonempty := by
