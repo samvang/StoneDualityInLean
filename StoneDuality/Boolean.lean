@@ -347,13 +347,69 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
       exact a.2.1
     have Xiscompact := X.toCompHaus.is_compact.isCompact_univ
 
-    have hSd : DirectedOn (fun (x x_1 : Set X) => x ⊇ x_1) asSets := by sorry
-    have hSn : ∀ U ∈ asSets, Set.Nonempty U := by sorry
+    have hSd : DirectedOn (fun (x x_1 : Set X) => x ⊇ x_1) asSets := by
+      unfold DirectedOn
+      intro U hU V hV
+      set W := U ∩ V with Wdef
+      use W
+      refine ⟨?_, Set.inter_subset_left U V, Set.inter_subset_right U V⟩
+
+      -- last goal: W ∈ asSets
+      let ⟨Upr, ⟨ hlU, hrU⟩ ⟩ := hU
+      let ⟨Vpr, ⟨ hlV, hrV⟩ ⟩ := hV
+      set Wpr := Upr ⊓ Vpr with WprDef
+
+      have W_coe : Clopens.Simps.coe Wpr = W := by
+        rw [WprDef, Wdef]
+        ext x
+        rw [← hrU]
+        rw [← hrV]
+        exact Set.mem_def
+
+      have W_in : Wpr ∈ Fclp := by
+        have ut : F.toFun Upr = True := by exact hlU
+        have vt : F.toFun Vpr = True := by exact hlV
+
+        calc F.toFun Wpr = F.toFun (Upr ⊓ Vpr) := rfl
+             _ = (F.toFun Upr) ⊓ (F.toFun Vpr) := by
+                                 simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat,
+                                   BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom,
+                                   map_inf, BoundedLatticeHom.coe_toLatticeHom, inf_Prop_eq]
+             _ = True ⊓ True := by rw [ut, vt]
+             _ = True := by simp only [ge_iff_le, le_refl, inf_of_le_left]
+
+      constructor
+      exact ⟨W_in, W_coe⟩
+
+    have hSn : ∀ U ∈ asSets, Set.Nonempty U := by
+      rw [hClp]
+      intro U hU
+      rw [Fclpeq] at hU
+      let ⟨Upr, ⟨ hl, hr⟩ ⟩ := hU
+
+      have empty_is_bottom : (∅ : Set X) = Clopens.Simps.coe ⊥ := by
+        exact rfl
+
+      have a : F.toFun Upr = True := by exact hl
+      have b : F.toFun ⊥ = False := by
+        simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+          SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom, BoundedLatticeHom.coe_toLatticeHom, map_bot,
+          eq_iff_iff, iff_false]
+        intro
+        trivial
+      rw [Set.nonempty_iff_ne_empty]
+
+      intro assume_U_empty
+      rw [assume_U_empty] at hr
+      rw [empty_is_bottom] at hr
+      have c : Upr = ⊥ := (Clopens.ext (id hr.symm)).symm
+      have : True = False := by rw [← a, ← b, ← c]
+      trivial
 
     have hSclp : ∀ U ∈ asSets, IsClopen U := by
       rw [hClp]
       intro U hU
-      let ⟨⟨U_shadow, r⟩, ⟨ hl, hr⟩ ⟩ := hU
+      let ⟨⟨U_shadow, r⟩, ⟨ _, hr⟩ ⟩ := hU
       rw [← hr]
       exact r
 
