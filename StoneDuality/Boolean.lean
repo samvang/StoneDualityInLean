@@ -350,16 +350,25 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
     have hSd : DirectedOn (fun (x x_1 : Set X) => x ⊇ x_1) asSets := by sorry
     have hSn : ∀ U ∈ asSets, Set.Nonempty U := by sorry
 
+    have hSclp : ∀ U ∈ asSets, IsClopen U := by
+      rw [hClp]
+      intro U hU
+      let ⟨⟨U_shadow, r⟩, ⟨ hl, hr⟩ ⟩ := hU
+      rw [← hr]
+      exact r
+
     have hSc : ∀ U ∈ asSets, IsCompact U := by
       rw [hClp]
       intro U hU
       apply IsClosed.isCompact
       apply IsClopen.isClosed
-      let ⟨⟨U_shadow, r⟩, ⟨ hl, hr⟩ ⟩ := hU
-      rw [← hr]
-      exact r
+      exact hSclp U hU
 
-    have hScl : ∀ U ∈ asSets, IsClosed U := by sorry
+    have hScl : ∀ U ∈ asSets, IsClosed U := by
+      rw [hClp]
+      intro U hU
+      apply IsClopen.isClosed
+      exact hSclp U hU
 
     have Kne : K.Nonempty := by
       refine IsCompact.nonempty_sInter_of_directed_nonempty_isCompact_isClosed hSd hSn hSc hScl
