@@ -356,7 +356,8 @@ lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun :
       apply IsClosed.isCompact
       apply IsClopen.isClosed
       let ⟨⟨U_shadow, r⟩, ⟨ hl, hr⟩ ⟩ := hU
-      sorry -- TODO just make use of the fact that U_shadow is Clopen and coerces to U somehow...
+      rw [← hr]
+      exact r
 
     have hScl : ∀ U ∈ asSets, IsClosed U := by sorry
 
