@@ -1,11 +1,6 @@
 /.lake
-docs/stonedualityba.out
-docs/stonedualityba.aux
-docs/stonedualityba.log
-docs/stonedualityba.blg
-docs/stonedualityba.fdb_latexmk
-docs/stonedualityba.fls
-docs/stonedualityba.synctex.gz
-docs/stonedualityba.pdf
-docs/stonedualityba.bcf
-docs/stonedualityba.run.xml
+/blueprint/print/
+/blueprint/web/
+*.bbl
+*.paux
+/blueprint/lean_decls

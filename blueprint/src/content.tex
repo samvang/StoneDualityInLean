@@ -1,23 +1,17 @@
-\documentclass[a4paper,10pt]{article}
+% In this file you should put the actual content of the blueprint.
+% It will be used both by the web and the print version.
+% It should *not* include the \begin{document}
+%
+% If you want to split the blueprint content into several files then
+% the current file can be a simple sequence of \input. Otherwise It
+% can start with a \chapter or \chapter for instance.
 
-\input{preamble}
 
-\title{Stone duality for Boolean algebras}
-\author{Sam van Gool}
+\newcommand{\docref}[3]{}
 
-\numberwithin{theorem}{section}
+\chapter{Introduction}
 
-% syntax: \docref{page}{declaration}{link text}
-\newcommand{\docref}[3]{%
-    \href{%
-        https://leanprover-community.github.io/mathlib4_docs/Mathlib/#1.html\##2%
-    }{#3}%
-}
-
-\begin{document}
-\maketitle
-
-The aim of this note is to give a detailed proof of Stone duality for Boolean
+The aim of this document is to give a detailed proof of Stone duality for Boolean
 algebras \cite{Sto1937BA} to facilitate its formalization in Mathlib. Note that
 Stone actually proved something more general for bounded distributive lattices
 \cite{Sto1937}. (Below, I will cut everything into very small numbered lemmas
@@ -25,7 +19,7 @@ and definitions which is not how I usually like to write math, but it seemed
 like it might be useful for organizing the formalization. TODO: put this in the
 lean blueprint format.)
 
-\section{Definitions and statement}
+\chapter{Definitions and statement}
 I first recall some definitions from Mathlib. A subset $S$ of a topological
 space is \emph{preconnected} if, whenever $U$ and $V$ are open subsets such
 that $S \subseteq U \cup V$, $S \cap U \neq \emptyset$ and $S \cap V \neq
@@ -40,9 +34,12 @@ on Boolean spaces.
 A \emph{Boolean algebra} is by definition a bounded distributive lattice with
 complements. This means that it is a structure of the form $(A, \vee, \wedge,
 \zer, \one, \neg)$ satisfying a number of axioms. We do not really care what
-the axioms are precisely. What is important to know is that, for any set $X$,
-the structure $(\mathcal{P}(X), \cup, \cap, \emptyset, X, (-)^{\c})$
-\docref{Data/Set/Basic}{Set.instBooleanAlgebraSet}{is a Boolean algebra}.
+the axioms are precisely. What is important to know is: 
+\begin{lemma}\lean{Set.instBooleanAlgebraSet}\leanok
+    For any set $X$, the structure 
+    $(\mathcal{P}(X), \cup, \cap, \emptyset, X, (-)^{\c})$ 
+    is a Boolean algebra.
+\end{lemma}
 In particular, I write $\mbf{2} = \{ \zer, \one \}$ for the unique two-element
 Boolean algebra; it can be seen that it is a Boolean algebra because it is the
 power set algebra of a singleton set. A Boolean algebra \emph{homomorphism} is
@@ -58,8 +55,9 @@ convenient way for Boolean algebras). An ideal is \emph{proper} if it does not
 contain $\one$. The \emph{partial order} on a Boolean algebra $A$ can be
 defined by $a \leq b$ iff $a \vee b = b$, or equivalently  iff $a \wedge b =
 a$. Our aim is to prove:
-\begin{theorem}\label{BABoolSpdualeq} The categories $\BoolAlg$ and $\BoolSp$
-    are dually equivalent.
+\begin{theorem}\lean{StoneDuality.Equiv}
+    \label{BABoolSpdualeq} 
+    The categories $\BoolAlg$ and $\BoolSp$ are dually equivalent.
 \end{theorem}
 It will also be useful and interesting to actually have concrete definitions of
 the dual equivalence functors both ways, as we will do below. 
@@ -74,10 +72,10 @@ thanks to an application of axiom of choice, and it seems like it would be hard
 to work with. I could of course be wrong about this, and implementing this road
 towards the proof might be an interesting alternative experiment. It may have
 the advantage of avoiding getting into the weeds of natural transformation
-arguments as I need to do in \cref{etanat,epsilonnat,triangle} below.
+arguments as I need to do in \cref{eta is natural transformation}, \cref{epsilon is natural transformation}, and \cref{triangle} below.
 \end{remark}
 
-\section{Two useful facts}
+\chapter{Two useful facts}
 We will need the following fundamental fact about Boolean algebras which is
 sometimes called the ultrafilter principle. It could also be deduced from the
 ring-theoretic fact (probably in Mathlib) that any non-unit element of a ring
@@ -103,21 +101,26 @@ is in some maximal ideal, but a direct proof is not hard.
     definitions that $x(\neg b) = \neg x(b)$.
 \end{proof}
 
+Recall that a space $X$ is called \emph{totally separated} if, for any distinct $x,y \in X$, there exist disjoint open sets $U, V \subseteq X$ such that $x \in U$ and $y \in V$.
+\begin{lemma}\lean{instTotallySeparatedSpace} \leanok \label{KTDimpliesTotSep}
+    Any compact Hausdorff totally disconnected space is totally separated.
+\end{lemma}
+
+
+\begin{lemma}\lean{isTotallyDisconnected_of_isClopen_set}\leanok
+    Suppose that, for any distinct $x,y \in X$, there exists a clopen set $K \subseteq X$ such that $x \in K$ and $y \not\in K$. Then $X$ is totally disconnected.
+\end{lemma}
+
 The following equivalent definition of Boolean spaces is convenient. 
 
-\begin{lemma}\label{BoolSpchar}
+\begin{proposition}\label{BoolSpchar}
     A compact Hausdorff space $X$ is totally disconnected if, and only if, for
     any distinct $x, y \in X$, there exists a clopen set $K \subseteq X$ such
     that $x \in K$ and $y \not\in K$.
-\end{lemma}
+\end{proposition}
+
 \begin{proof}
-   \docref{Topology/Connected/TotallyDisconnected}{isTotallyDisconnected_of_isClopen_set}{The
-   sufficiency is in Mathlib already}. It is also in Mathlib that a
-   \docref{Topology/Separation}{instTotallySeparatedSpace}{compact
-   Hausdorff totally disconnected space is totally separated}. (Recall that a
-   space $X$ is called \emph{totally separated} if, for any distinct $x,y \in
-   X$, there exist disjoint open sets $U, V \subseteq X$ such that $x \in U$
-   and $y \in V$.) Finally, in any totally separated space, one may actually
+    Finally, in any totally separated space, one may actually
    separate distinct points by clopens, and
    \docref{Topology/Connected/TotallyDisconnected}
    {exists_isClopen_of_totally_separated}{this is also in Mathlib}.
@@ -142,7 +145,7 @@ The following equivalent definition of Boolean spaces is convenient.
    % disjoint open sets $U$ and $V$ such that $F_1 \subseteq U$, $y \in V$. In
    % particular, $x \in U$, as required.
 \end{proof}
-\section{The functors}
+\chapter{The functors}
 We define the two functors that make up Stone duality for Boolean algebras:
 $\Clp \colon \BoolSp \to \BoolAlg$ and $\Spec \colon \BoolAlg \to \BoolSp$.
 
@@ -150,16 +153,14 @@ $\Clp \colon \BoolSp \to \BoolAlg$ and $\Spec \colon \BoolAlg \to \BoolSp$.
 If $X$ is a Boolean space, write $\Clp(X)$ for the set of clopen
 subsets of $X$. 
 
-\begin{proposition}\label{clpwelldef}
+\begin{proposition}\label{clpwelldef}\lean{TopologicalSpace.Clopens.instBooleanAlgebraClopens}\leanok
     $\Clp(X)$ is a Boolean subalgebra of the Boolean algebra $\mathcal{P}(X)$.
 \end{proposition}
 \begin{proof}
     Finite unions and complements of clopen sets are clopen, and the empty set
     is clopen.
-    \docref{Topology/Sets/Closeds}{TopologicalSpace.Clopens.instBooleanAlgebraClopens}{This
-    is in Mathlib}.
 \end{proof} 
-\begin{proposition}\label{clpmorphism}
+\begin{proposition}\label{clpmorphism}\lean{StoneDuality.Clp}\leanok
     If $f \colon X \to Y$ is a continuous function between Boolean spaces, then
     $f^{-1} \colon \Clp(Y) \to \Clp(X)$ is a Boolean algebra homomorphism.
 \end{proposition}
@@ -325,7 +326,7 @@ f_*(g_*(y)) \ . \qedhere \]
 One sometimes writes $\Spec f$ for $f_*$ but
 the notation is a bit heavy.
 
-\section{The equivalence}
+\chapter{The equivalence}
 \begin{definition}
 Let $A$ be a Boolean algebra. We write $\eta_A$ for the Boolean homomorphism
 that sends $a \in A$ to $U_a \in \Clp(\Spec(A))$.
@@ -397,7 +398,7 @@ The function $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
     from a compact to a Hausdorff space.
 \end{proof}
 
-\begin{proposition}\label{etanat}
+\begin{proposition}\label{eta is natural transformation}\lean{StoneDuality.eta}
     The assignment $A \mapsto \eta_A$ is a natural transformation from the
     identity functor on $\BoolAlg$ to the functor $\Clp \circ \Spec$.
 \end{proposition}
@@ -411,7 +412,7 @@ The function $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
     \Spec)(h)(\eta_A(a))$, as required.
 \end{proof}
 
-\begin{proposition}\label{epsilonnat}
+\begin{proposition}\label{epsilon is natural transformation}\lean{StoneDuality.epsilon}
     The assignment $X \mapsto \epsilon_X$ is a natural transformation from the
     identity functor on $\BoolSp$ to the functor $\Spec \circ \Clp$.
 \end{proposition}
@@ -425,13 +426,13 @@ The function $\eta_A$ is bijective, and thus an isomorphism in $\BoolAlg$.
     and $\Clp$ on morphisms. Thus, $\xi_1 = \xi_2$.
 \end{proof}
 
-According to
-\docref{CategoryTheory/Equivalence}{CategoryTheory.Equivalence}{the
-definition of categorical equivalence in Mathlib}, we finally need to prove one
+\begin{remark}\lean{CategoryTheory.Equivalence}\leanok
+According to the definition of categorical equivalence in Mathlib, we finally need to prove one
 of the triangle laws for the natural isomorphisms $\eta$ and $\epsilon$, namely
 the one that says that the composite natural transformation $\Spec \Rightarrow
 \Spec \Clp \Spec \Rightarrow \Spec$ is the identity.
-\begin{proposition}\label{triangle}
+\end{remark}
+\begin{proposition}\label{triangle}\lean{StoneDuality.triangle}
     The triangle law for $\eta$ and $\epsilon$ holds. 
 \end{proposition}
 \begin{proof}
@@ -450,5 +451,4 @@ the one that says that the composite natural transformation $\Spec \Rightarrow
     \iff x(a) = \one$, by definition of $\eta_A$. Thus, $f(g(x)) = f(y) = x$.
 \end{proof}
 
-\end{document}
 
