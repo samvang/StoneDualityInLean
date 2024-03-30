@@ -316,9 +316,25 @@ theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of
   intro a
   exact congrFun h a
 
+lemma neg_determined_in_bool {A : BoolAlg} (a b : A) (h1 : a ⊓ b = ⊥) (h2 : a ⊔ b = ⊤) : b = aᶜ := by
+  rw [compl_unique h1 h2]
 
--- TODO: A bounded lattice homomorphism of Boolean algebras preserves negation.
--- theorem map_neg_of_bddlathom {A B : BoolAlg} (f : A ⟶ B) (a : A) : f (¬ a) = ¬ f a := by sorry
+theorem map_neg_of_bddlathom {A B : BoolAlg} (f : A ⟶ B) (a : A) : f (aᶜ) = (f a)ᶜ := by
+  have : a ⊓ aᶜ = ⊥ := by simp only [inf_compl_self]
+  have : a ⊔ aᶜ = ⊤ := by simp only [sup_compl_eq_top]
+
+  have m : f a ⊓ f (aᶜ) = ⊥ := by
+      calc f a ⊓ f (aᶜ) = f (a ⊓ aᶜ) := by rw [map_inf]
+                      _ = f ⊥        := by simp only [inf_compl_self, map_bot]
+                      _ = ⊥          := by simp only [map_bot]
+
+  have j : f a ⊔ f (aᶜ) = ⊤ := by
+      calc f a ⊔ f (aᶜ) = f (a ⊔ aᶜ) := by rw [map_sup]
+                      _ = f ⊤        := by simp only [sup_compl_eq_top, map_top]
+                      _ = ⊤          := by simp only [map_top]
+
+  exact neg_determined_in_bool (f a) (f aᶜ) m j
+
 
 lemma epsilonSurj {X : Profinite} : Function.Surjective (@epsilonCont X).toFun := by
     intro F
