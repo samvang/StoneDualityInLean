@@ -602,14 +602,15 @@ lemma etaObj_real_surjective (A : BoolAlg) : Function.Surjective (etaObj_real A)
   have hUopen : ∀ i, IsOpen (U i) := fun i ↦ TopologicalSpace.isOpen_generateFrom_of_mem (hBasic i)
   obtain ⟨F, hF⟩ := IsCompact.elim_finite_subcover Kcomp U hUopen (subset_of_eq hU)
 
-  have f : ∀ i : I, { a : A // etaObjObjSet a = U i } := by
-    intro i
-    have h := hBasic i
-    use Exists.choose h
-    have := Exists.choose_spec h
-    simp at this
-    simp [etaObjObjSet]
-    exact this
+  have f : ∀ i : I, { a : A // etaObjObjSet a = U i } := fun i ↦ by
+    use Exists.choose (hBasic i)
+    have hsp := Exists.choose_spec (hBasic i)
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+      BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff] at hsp
+    simp only [Profinite.coe_of, CompHaus.coe_of, etaObjObjSet, BddDistLat.coe_toBddLat,
+      BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff,
+      SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom]
+    exact hsp
 
   set a := (Finset.sup F (fun i ↦ (f i).1)) with aeq
 
