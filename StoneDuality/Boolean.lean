@@ -190,7 +190,7 @@ lemma mem_basis (p : Prop) : {x : A ⟶ of Prop | x a = p} ∈ basis A := by
     simp only [Prop.top_eq_true, Prop.bot_eq_false, iff_false, iff_true]
     rfl
 
-instance : CompactSpace (A ⟶ of Prop) where
+instance CompactDual : CompactSpace (A ⟶ of Prop) where
   isCompact_univ := by
     let K := Set.range (emb A)
     have hK : IsCompact K := (closedEmbedding_emb A).isClosed_range.isCompact
@@ -586,7 +586,43 @@ def etaObj_real (A : BoolAlg) : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ 
       BoundedLatticeHom.coe_toLatticeHom, map_bot, bot_ne_top, Set.setOf_false,
       Set.mem_empty_iff_false, Set.bot_eq_empty]
 
-lemma etaObj_real_bijective (A : BoolAlg) : Function.Bijective (etaObj_real A) := sorry
+lemma etaObj_real_injective (A : BoolAlg) : Function.Injective (etaObj_real A) := sorry
+
+lemma etaObj_real_surjective (A : BoolAlg) : Function.Surjective (etaObj_real A) := by
+  intro K
+  have Ko : IsOpen K.carrier := K.2.2
+  have Kc : IsClosed K.carrier := K.2.1
+  obtain ⟨I, ⟨U, hU, hBasic⟩⟩ :=
+    TopologicalSpace.IsTopologicalBasis.open_eq_iUnion (basis_is_basis A) Ko
+  have Kcomp : IsCompact K.carrier := by
+    apply IsCompact.of_isClosed_subset ?_ Kc ?_
+    use Set.univ
+    exact (CompactDual A).1
+    exact fun ⦃a⦄ a ↦ trivial
+  have hUopen : ∀ i, IsOpen (U i) := fun i ↦ TopologicalSpace.isOpen_generateFrom_of_mem (hBasic i)
+  obtain ⟨F, hF⟩ := IsCompact.elim_finite_subcover Kcomp U hUopen (subset_of_eq hU)
+
+  have f : ∀ i : I, { a : A // etaObjObjSet a = U i } := by
+    intro i
+    have h := hBasic i
+    use Exists.choose h
+    have := Exists.choose_spec h
+    simp at this
+    simp [etaObjObjSet]
+    exact this
+
+  set a := (Finset.sup F (fun i ↦ (f i).1)) with aeq
+
+  use a
+  have ltr : (etaObj_real A) a ≤ K := by sorry
+  have rtl : K ≤ (etaObj_real A) a := by sorry
+
+  apply (antisymm ltr rtl)
+
+
+
+lemma etaObj_real_bijective (A : BoolAlg) : Function.Bijective (etaObj_real A) :=
+  ⟨etaObj_real_injective A, etaObj_real_surjective A⟩
 
 /--
 This is used in the blueprint, doesn't seem to be in mathlib. Probably easiest to construct using
@@ -625,12 +661,14 @@ section
 This approach might also work, but if the above works, ignore this.
 -/
 
-def etaObj_real_orderIso (A : BoolAlg) : A ≃o (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
-  toFun := etaObjObj
-  invFun := sorry
-  left_inv := sorry
-  right_inv := sorry
+
+def etaObj_real_orderEmb (A : BoolAlg) : A ↪o BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop))) where
+  toFun := etaObj_real A
+  inj' := etaObj_real_injective A
   map_rel_iff' := sorry
+
+def etaObj_real_orderIso (A : BoolAlg) : A ≃o (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) := RelIso.ofSurjective (etaObj_real_orderEmb A) (etaObj_real_surjective A)
+
 
 def etaObj_real_iso' (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
   BoolAlg.Iso.mk (etaObj_real_orderIso A)
