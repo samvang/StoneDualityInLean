@@ -307,8 +307,6 @@ lemma Profinite.coe_of (X : Type*) [TopologicalSpace X] [CompactSpace X] [T2Spac
     [TotallyDisconnectedSpace X] : (Profinite.of X).toCompHaus = CompHaus.of X :=
   rfl
 
-
-
 theorem coercionhell {X : Profinite} (F G : ↑(Profinite.of (BoolAlg.of
     (Clopens ↑X.toCompHaus.toTop) ⟶ BoolAlg.of Prop)).toCompHaus.toTop)
     (h : F.toFun = G.toFun) : F = G := by
@@ -421,7 +419,6 @@ def epsilonObj {X : Profinite} : X ≅ (Profinite.of (BoolAlg.of (Clopens X) ⟶
     exact hK.2
   · exact epsilonSurj
 
-
 def epsilon : 𝟭 Profinite ≅ Clp.rightOp ⋙ Spec := by
   refine NatIso.ofComponents (fun X ↦ epsilonObj) ?_
   intro X Y f
@@ -434,10 +431,29 @@ def epsilon : 𝟭 Profinite ≅ Clp.rightOp ⋙ Spec := by
 def etaObjObjSet {A : BoolAlg} (a : A) :
   Set (Profinite.of (A ⟶ BoolAlg.of Prop)) := { x | x.toFun a = ⊤ }
 
+-- TODO Fix me
+lemma coercionhell2 :
+@DFunLike.coe (A ⟶ BoolAlg.of Prop) ((forget BoolAlg).obj A) (fun _ ↦ (forget BoolAlg).obj (BoolAlg.of Prop)) ConcreteCategory.instFunLike x aᶜ =
+@DFunLike.coe (BoundedLatticeHom ↑A Prop) (↑A) (fun _ ↦ Prop) BoundedLatticeHom.instFunLike x aᶜ
+  := by rfl
+
+lemma eta_neg {A : BoolAlg} (a : A) : etaObjObjSet (aᶜ) = (etaObjObjSet a)ᶜ := by
+  ext x
+  simp only [etaObjObjSet, eq_iff_iff, Set.mem_setOf_eq, Set.mem_compl_iff]
+  rw [Prop.top_eq_true]
+  simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, SupHom.toFun_eq_coe,
+    LatticeHom.coe_toSupHom, BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff, iff_true]
+  rw [← coercionhell2, map_neg_of_bddlathom x a]
+  trivial
+
+def IsOpen_etaObjObj {A : BoolAlg} (a : A) : IsOpen (etaObjObjSet a) := by
+  apply IsTopologicalBasis.isOpen (basis_is_basis A)
+  exists a
+
 def IsClopen_etaObjObj {A : BoolAlg} (a : A)  : IsClopen (etaObjObjSet a) := by
   constructor
-  · sorry -- TODO: show that eta a is closed
-  · sorry -- TOOD: show that eta a is open
+  · rw [← isOpen_compl_iff, ← eta_neg]; exact IsOpen_etaObjObj aᶜ
+  · exact IsOpen_etaObjObj a
 
 def etaObjObj {A : BoolAlg} (a : A) : (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) := by
   refine ⟨etaObjObjSet a, IsClopen_etaObjObj a⟩
@@ -447,20 +463,42 @@ lemma supeqtop (a b : Prop) : a ⊔ b = ⊤ ↔ a = ⊤ ∨ b = ⊤ := by
   rw [Prop.top_eq_true]
   simp only [sup_Prop_eq, eq_iff_iff, iff_true]
 
+/-- The homomorphism η at a Boolean algebra A.-/
 def etaObj_real (A : BoolAlg) : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
   toFun := etaObjObj
   map_sup' := by
     intros a b
-    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, etaObjObj,
-     etaObjObjSet]
-    ext x
-    simp only [Clopens.coe_mk, Clopens.coe_sup, Set.mem_union, Set.mem_setOf_eq]
-    rw [x.map_sup']
-    apply supeqtop
-  -- TODO: fill these (but hopefully can shorten the above proof?)
-  map_inf' := sorry
-  map_top' := sorry
-  map_bot' := sorry
+    simp only [etaObjObj, etaObjObjSet]
+    congr; ext x
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat,
+      BoolAlg.coe_of, SupHom.toFun_eq_coe, map_sup, LatticeHom.coe_toSupHom,
+      BoundedLatticeHom.coe_toLatticeHom, sup_Prop_eq, Prop.top_eq_true, eq_iff_iff, iff_true,
+      Set.mem_setOf_eq, Clopens.coe_mk, Set.mem_union]
+
+  map_inf' := by
+    intros a b
+    simp only [etaObjObj, etaObjObjSet]
+    congr; ext x
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat,
+      BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom, map_inf,
+      BoundedLatticeHom.coe_toLatticeHom, inf_Prop_eq, Prop.top_eq_true, eq_iff_iff, iff_true,
+      Set.mem_setOf_eq, Clopens.coe_mk, Set.mem_inter_iff]
+
+  map_top' := by
+    simp only [etaObjObj, etaObjObjSet]
+    congr; ext x
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat,
+      BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom,
+      BoundedLatticeHom.coe_toLatticeHom, map_top, Prop.top_eq_true, Set.setOf_true, Set.mem_univ,
+      Set.top_eq_univ]
+
+  map_bot' := by
+    simp only [etaObjObj, etaObjObjSet]
+    congr; ext x
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat,
+      BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom,
+      BoundedLatticeHom.coe_toLatticeHom, map_bot, bot_ne_top, Set.setOf_false,
+      Set.mem_empty_iff_false, Set.bot_eq_empty]
 
 lemma etaObj_real_bijective (A : BoolAlg) : Function.Bijective (etaObj_real A) := sorry
 
