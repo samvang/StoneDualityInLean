@@ -1,0 +1,39 @@
+% This file makes a web version of the blueprint
+% It should include all the \usepackage needed for this version.
+% The template includes standard AMS packages.
+% It is otherwise a very minimal preamble (you should probably at least
+% add cleveref and tikz-cd).
+
+\documentclass{report}
+
+% \usepackage{etoolbox}
+
+% \RequirePackage[dvipsnames]{xcolor}
+% \RequirePackage{dsfont}
+
+\usepackage{amsmath, amssymb, amsthm}
+
+\usepackage{hyperref}
+\usepackage[capitalize]{cleveref}
+
+\usepackage[showmore, dep_graph]{blueprint}
+
+\input{packages}
+\input{macros/common}
+\input{macros/web}
+
+\home{https://samvang.github.io/StoneDualityInLean}
+\github{https://github.com/samvang/StoneDualityInLean}
+\dochome{https://samvang.github.io/StoneDualityInLean/docs}
+
+\title{Stone Duality for Boolean Algebras}
+\author{Dagur Ásgeirsson, Sam van Gool, Tomáš Jakl, Filippo A.E. Nuccio}
+
+\begin{document}
+\maketitle
+\input{content}
+
+
+\bibliographystyle{amsplain}
+\bibliography{refs.bib}
+\end{document}

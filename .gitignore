@@ -10,4 +10,9 @@ docs/stonedualityba.pdf
 docs/stonedualityba.bcf
 docs/stonedualityba.run.xml
 docs/stonedualityba.bbl
+/blueprint/print/
+/blueprint/web/
+*.bbl
+*.paux
+/blueprint/lean_decls
 

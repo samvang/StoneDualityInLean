@@ -7,7 +7,7 @@ open TopologicalSpace
     function space in a topological algebra.
     TODO: finish this. -/
 
-
+--TODO: Use a library result suggested by Anatole
 
 /-- When Y is a T2 space with a continuous binary operation and X is a set with a binary operation,
   the set of functions from X to Y that preserve the operation is closed as a subspace of X → Y. -/
