@@ -532,17 +532,82 @@ lemma eta_neg {A : BoolAlg} (a : A) : etaObjObjSet (aᶜ) = (etaObjObjSet a)ᶜ 
   rw [← coercionhell2, map_neg_of_bddlathom x a]
   trivial
 
-def IsOpen_etaObjObj {A : BoolAlg} (a : A) : IsOpen (etaObjObjSet a) := by
+def IsOpen_etaObjObjSet {A : BoolAlg} (a : A) : IsOpen (etaObjObjSet a) := by
   apply IsTopologicalBasis.isOpen (basis_is_basis A)
   exists a
 
-def IsClopen_etaObjObj {A : BoolAlg} (a : A)  : IsClopen (etaObjObjSet a) := by
+def IsClopen_etaObjObjSet {A : BoolAlg} (a : A)  : IsClopen (etaObjObjSet a) := by
   constructor
-  · rw [← isOpen_compl_iff, ← eta_neg]; exact IsOpen_etaObjObj aᶜ
-  · exact IsOpen_etaObjObj a
+  · rw [← isOpen_compl_iff, ← eta_neg]; exact IsOpen_etaObjObjSet aᶜ
+  · exact IsOpen_etaObjObjSet a
 
-def etaObjObj {A : BoolAlg} (a : A) : (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) := by
-  refine ⟨etaObjObjSet a, IsClopen_etaObjObj a⟩
+
+
+def etaObjObj {A : BoolAlg} (a : A) : (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
+  carrier := etaObjObjSet a
+  isClopen' := IsClopen_etaObjObjSet a
+
+lemma BAhom_pres_finsup {A B : BoolAlg} {I : Type} (h : A ⟶ B) (F : Finset I) (f : I → A) : h.toFun (Finset.sup F f) = Finset.sup F (fun i ↦ h.toFun (f i)) := by
+  simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, SupHom.toFun_eq_coe,
+    LatticeHom.coe_toSupHom, BoundedLatticeHom.coe_toLatticeHom, map_finset_sup]
+  trivial
+
+-- TODO: a finite sup in Prop is equal to true iff one of the elements is equal to true.
+lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
+  Finset.sup F f = ⊤ ↔ ∃ i ∈ F, f i = ⊤ :=
+  by sorry
+
+lemma etaObjObj_surjective {A : BoolAlg} (K : Clopens (Profinite.of (A ⟶ BoolAlg.of Prop))) :
+  ∃ a, etaObjObj a = K := by
+  have Ko : IsOpen K.carrier := K.2.2
+  have Kc : IsClosed K.carrier := K.2.1
+  obtain ⟨I, ⟨U, hU, hBasic⟩⟩ :=
+    TopologicalSpace.IsTopologicalBasis.open_eq_iUnion (basis_is_basis A) Ko
+  have Kcomp : IsCompact K.carrier := by
+    apply IsCompact.of_isClosed_subset ?_ Kc ?_
+    use Set.univ
+    exact (CompactDual A).1
+    exact fun ⦃a⦄ a ↦ trivial
+  have hUopen : ∀ i, IsOpen (U i) := fun i ↦ TopologicalSpace.isOpen_generateFrom_of_mem (hBasic i)
+  obtain ⟨F, hF⟩ := IsCompact.elim_finite_subcover Kcomp U hUopen (subset_of_eq hU)
+
+  have f : ∀ i : I, { a : A // etaObjObjSet a = U i } := fun i ↦ by
+    use Exists.choose (hBasic i)
+    have hsp := Exists.choose_spec (hBasic i)
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+      BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff] at hsp
+    simp only [Profinite.coe_of, CompHaus.coe_of, etaObjObjSet, BddDistLat.coe_toBddLat,
+      BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff,
+      SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom]
+    exact hsp
+
+  set a := (Finset.sup F (fun i ↦ (f i).1)) with aeq
+
+  use a
+  simp only [etaObjObj]
+  congr
+  simp only [etaObjObjSet, aeq, Prop.top_eq_true, iff_true]
+  ext y
+  simp only [Profinite.coe_of, CompHaus.coe_of] at y
+  simp only [eq_iff_iff, Set.mem_setOf_eq]
+  rw [BAhom_pres_finsup, top_sup_prime]
+  constructor <;> intro hy
+  · obtain ⟨i, ⟨_, hi⟩⟩ := hy
+    have : y ∈ U i := by
+      rw [← (f i).2]
+      simp only [etaObjObjSet, Profinite.coe_of, CompHaus.coe_of, BddDistLat.coe_toBddLat,
+        BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom,
+        BoundedLatticeHom.coe_toLatticeHom, Set.mem_setOf_eq]
+      exact hi
+    rw [hU]
+    simp only [Set.mem_iUnion]
+    use i
+  · apply hF at hy
+    simp only [Set.mem_iUnion, exists_prop] at hy
+    obtain ⟨i, ⟨iF,yUi⟩⟩ := hy
+    rw [← (f i).2] at yUi
+    simp only [etaObjObjSet, Set.mem_setOf_eq] at yUi
+    use i
 
 -- the following is probably already in library somewhere (we'll need the same for inf, top and bot)
 lemma supeqtop (a b : Prop) : a ⊔ b = ⊤ ↔ a = ⊤ ∨ b = ⊤ := by
@@ -550,7 +615,7 @@ lemma supeqtop (a b : Prop) : a ⊔ b = ⊤ ↔ a = ⊤ ∨ b = ⊤ := by
   simp only [sup_Prop_eq, eq_iff_iff, iff_true]
 
 /-- The homomorphism η at a Boolean algebra A.-/
-def etaObj_real (A : BoolAlg) : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
+def etaObj (A : BoolAlg) : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
   toFun := etaObjObj
   map_sup' := by
     intros a b
@@ -586,44 +651,18 @@ def etaObj_real (A : BoolAlg) : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ 
       BoundedLatticeHom.coe_toLatticeHom, map_bot, bot_ne_top, Set.setOf_false,
       Set.mem_empty_iff_false, Set.bot_eq_empty]
 
-lemma etaObj_real_injective (A : BoolAlg) : Function.Injective (etaObj_real A) := sorry
+lemma etaObj_eq {A : BoolAlg} (a : A) : ((etaObj A).toFun a).carrier = { x | x.toFun a = ⊤ } := by rfl
 
-lemma etaObj_real_surjective (A : BoolAlg) : Function.Surjective (etaObj_real A) := by
-  intro K
-  have Ko : IsOpen K.carrier := K.2.2
-  have Kc : IsClosed K.carrier := K.2.1
-  obtain ⟨I, ⟨U, hU, hBasic⟩⟩ :=
-    TopologicalSpace.IsTopologicalBasis.open_eq_iUnion (basis_is_basis A) Ko
-  have Kcomp : IsCompact K.carrier := by
-    apply IsCompact.of_isClosed_subset ?_ Kc ?_
-    use Set.univ
-    exact (CompactDual A).1
-    exact fun ⦃a⦄ a ↦ trivial
-  have hUopen : ∀ i, IsOpen (U i) := fun i ↦ TopologicalSpace.isOpen_generateFrom_of_mem (hBasic i)
-  obtain ⟨F, hF⟩ := IsCompact.elim_finite_subcover Kcomp U hUopen (subset_of_eq hU)
+-- TODO: probably easier to formulate as etaObjObj_injective
+lemma etaObj_injective (A : BoolAlg) : Function.Injective (etaObj A) := sorry
 
-  have f : ∀ i : I, { a : A // etaObjObjSet a = U i } := fun i ↦ by
-    use Exists.choose (hBasic i)
-    have hsp := Exists.choose_spec (hBasic i)
-    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
-      BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff] at hsp
-    simp only [Profinite.coe_of, CompHaus.coe_of, etaObjObjSet, BddDistLat.coe_toBddLat,
-      BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff,
-      SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom]
-    exact hsp
-
-  set a := (Finset.sup F (fun i ↦ (f i).1)) with aeq
-
-  use a
-  have ltr : (etaObj_real A) a ≤ K := by sorry
-  have rtl : K ≤ (etaObj_real A) a := by sorry
-
-  apply (antisymm ltr rtl)
+-- TODO: just apply etaObjObj_surjective
+lemma etaObj_surjective (A : BoolAlg) : Function.Surjective (etaObj A) := by sorry
 
 
 
-lemma etaObj_real_bijective (A : BoolAlg) : Function.Bijective (etaObj_real A) :=
-  ⟨etaObj_real_injective A, etaObj_real_surjective A⟩
+lemma etaObj_bijective (A : BoolAlg) : Function.Bijective (etaObj A) :=
+  ⟨etaObj_injective A, etaObj_surjective A⟩
 
 /--
 This is used in the blueprint, doesn't seem to be in mathlib. Probably easiest to construct using
@@ -635,23 +674,23 @@ lemma BoolAlg.iso_of_bijective {A B : BoolAlg} (f : A ⟶ B) (hf : Function.Bije
   hom_inv_id := sorry
   inv_hom_id := sorry
 
-def etaObj_real_iso (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
-  BoolAlg.iso_of_bijective (etaObj_real A) (etaObj_real_bijective A)
-  -- BoolAlg.Iso.mk (etaObj_real_orderIso A)
+def etaObj_iso (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
+  BoolAlg.iso_of_bijective (etaObj A) (etaObj_bijective A)
+  -- BoolAlg.Iso.mk (etaObj_orderIso A)
 
-def etaObj (A : BoolAlgᵒᵖ) : (Spec ⋙ Clp.rightOp).obj A ≅ (𝟭 BoolAlgᵒᵖ).obj A :=
-  (etaObj_real_iso A.unop).op
+def etaObj_op (A : BoolAlgᵒᵖ) : (Spec ⋙ Clp.rightOp).obj A ≅ (𝟭 BoolAlgᵒᵖ).obj A :=
+  (etaObj_iso A.unop).op
 
 def eta : Spec ⋙ Clp.rightOp ≅ 𝟭 BoolAlgᵒᵖ := by
-  refine NatIso.ofComponents (fun A ↦ etaObj A) ?_
+  refine NatIso.ofComponents (fun A ↦ etaObj_op A) ?_
   intro X Y ⟨f⟩
-  simp [etaObj]
+  simp [etaObj_op]
   change _ = _ ≫ f.op
   simp only [← op_comp]
   congr 1
-  simp [etaObj_real_iso]
+  simp [etaObj_iso]
   unfold BoolAlg.iso_of_bijective
-  change (etaObj_real Y.unop) ≫ _ = f ≫ etaObj_real X.unop
+  change (etaObj Y.unop) ≫ _ = f ≫ etaObj X.unop
   apply BoundedLatticeHom.ext
   intro a
   rfl
@@ -663,16 +702,16 @@ This approach might also work, but if the above works, ignore this.
 -/
 
 
-def etaObj_real_orderEmb (A : BoolAlg) : A ↪o BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop))) where
-  toFun := etaObj_real A
-  inj' := etaObj_real_injective A
+def etaObj_orderEmb (A : BoolAlg) : A ↪o BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop))) where
+  toFun := etaObj A
+  inj' := etaObj_injective A
   map_rel_iff' := sorry
 
-def etaObj_real_orderIso (A : BoolAlg) : A ≃o (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) := RelIso.ofSurjective (etaObj_real_orderEmb A) (etaObj_real_surjective A)
+def etaObj_orderIso (A : BoolAlg) : A ≃o (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) := RelIso.ofSurjective (etaObj_orderEmb A) (etaObj_surjective A)
 
 
-def etaObj_real_iso' (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
-  BoolAlg.Iso.mk (etaObj_real_orderIso A)
+def etaObj_iso' (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
+  BoolAlg.Iso.mk (etaObj_orderIso A)
 
 -- etc.
 
@@ -685,16 +724,16 @@ end
   Clp.rightOp.map (epsilon.hom.app X) ≫ eta.hom.app (Clp.rightOp.obj X) =
     𝟙 (Clp.rightOp.obj X) := by
     intro X
-    simp [eta, etaObj, etaObj_real_iso]
+    simp [eta, etaObj_op, etaObj_iso]
     unfold BoolAlg.iso_of_bijective
-    change _ ≫ (etaObj_real _).op = _
+    change _ ≫ (etaObj _).op = _
     rw [← op_comp]
     change _ = (𝟙 _).op
     congr 1
     apply BoundedLatticeHom.ext
     intro a
     let f := Clp.map (epsilon.hom.app X).op
-    let g := etaObj_real (BoolAlg.of (Clopens X))
+    let g := etaObj (BoolAlg.of (Clopens X))
     -- change f (g x) = x
     let y := g a
     erw [id_apply, comp_apply]
