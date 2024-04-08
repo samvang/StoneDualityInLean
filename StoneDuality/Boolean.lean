@@ -557,6 +557,19 @@ lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
   Finset.sup F f = ⊤ ↔ ∃ i ∈ F, f i = ⊤ :=
   by sorry
 
+
+lemma etaObjObjSet_orderemb {A : BoolAlg} (a b : A) (hle : etaObjObjSet a ⊆ etaObjObjSet b) : a ≤ b := by
+  simp only [Profinite.coe_of, CompHaus.coe_of, etaObjObjSet, BddDistLat.coe_toBddLat,
+    BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom,
+    BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff, Set.setOf_subset_setOf, Prop.top_eq_true,
+    iff_true] at hle
+
+
+
+
+  sorry
+
+
 lemma etaObjObj_surjective {A : BoolAlg} (K : Clopens (Profinite.of (A ⟶ BoolAlg.of Prop))) :
   ∃ a, etaObjObj a = K := by
   have Ko : IsOpen K.carrier := K.2.2
@@ -567,7 +580,7 @@ lemma etaObjObj_surjective {A : BoolAlg} (K : Clopens (Profinite.of (A ⟶ BoolA
     apply IsCompact.of_isClosed_subset ?_ Kc ?_
     use Set.univ
     exact (CompactDual A).1
-    exact fun ⦃a⦄ a ↦ trivial
+    exact fun ⦃a⦄ _ ↦ trivial
   have hUopen : ∀ i, IsOpen (U i) := fun i ↦ TopologicalSpace.isOpen_generateFrom_of_mem (hBasic i)
   obtain ⟨F, hF⟩ := IsCompact.elim_finite_subcover Kcomp U hUopen (subset_of_eq hU)
 
