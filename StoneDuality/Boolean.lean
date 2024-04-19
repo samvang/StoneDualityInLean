@@ -569,7 +569,7 @@ lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
         exact id (Iff.symm h)
 
       have insert : ∀ a : I, ∀ t : Finset I, a ∉ t → p t → p (insert a t) := by
-        intro a t h hpt
+        intro a t _ hpt
         by_cases h : f a
 
         · simp [p]
@@ -583,14 +583,8 @@ lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
           apply Or.inr
           have h' : Finset.sup t f := or_cancel_left (of_iff_true hi) h
 
-          -- have _ : Finset.sup t f = ⊤ → ∃ i ∈ t, f i = ⊤ := by
-          --   exact p t   -- fails, I cannot get inside of Prop...
-
-          have _ : ∃ i ∈ t, f i = ⊤ := by 
-            -- let u := p t (iff_true_intro h')  -- the same here
-            sorry
-
-          sorry
+          simp [p] at hpt
+          exact hpt (iff_true_intro h')
 
       exact Finset.induction_on F empty insert
 
