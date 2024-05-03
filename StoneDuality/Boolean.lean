@@ -552,10 +552,46 @@ lemma BAhom_pres_finsup {A B : BoolAlg} {I : Type} (h : A ⟶ B) (F : Finset I) 
     LatticeHom.coe_toSupHom, BoundedLatticeHom.coe_toLatticeHom, map_finset_sup]
   trivial
 
+-- TODO: this must be a standard fact...
+lemma or_cancel_left {p q : Prop} (ho : (p ∨ q)) (hn : ¬p) : q := by
+  tauto
+
 -- TODO: a finite sup in Prop is equal to true iff one of the elements is equal to true.
 lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
-  Finset.sup F f = ⊤ ↔ ∃ i ∈ F, f i = ⊤ :=
-  by sorry
+  Finset.sup F f = ⊤ ↔ ∃ i ∈ F, f i = ⊤ := by
+    apply Iff.intro
+    · let p := λ H => Finset.sup H f = ⊤ → ∃ i ∈ H, f i = ⊤
+
+      have empty : p ∅ := by
+        simp [p]
+        intro h
+        rw [← true_iff_false]
+        exact id (Iff.symm h)
+
+      have insert : ∀ a : I, ∀ t : Finset I, a ∉ t → p t → p (insert a t) := by
+        intro a t _ hpt
+        by_cases h : f a
+
+        · simp [p]
+          intro _
+          apply Or.inl
+          rw [propext (iff_true_left h)]
+          trivial
+
+        · simp [p]
+          intro hi
+          apply Or.inr
+          have h' : Finset.sup t f := or_cancel_left (of_iff_true hi) h
+
+          simp [p] at hpt
+          exact hpt (iff_true_intro h')
+
+      exact Finset.induction_on F empty insert
+
+    · rintro ⟨i,inF, fiT⟩
+      have leq : f i ≤ Finset.sup F f := Finset.le_sup inF
+      rw [fiT] at leq
+      exact eq_top_iff.mpr leq
 
 
 lemma etaObjObjSet_orderemb {A : BoolAlg} (a b : A) (hle : etaObjObjSet a ⊆ etaObjObjSet b) : a ≤ b := by
