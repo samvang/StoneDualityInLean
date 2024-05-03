@@ -599,10 +599,7 @@ lemma etaObjObjSet_orderemb {A : BoolAlg} (a b : A) (hle : etaObjObjSet a ⊆ et
     BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom,
     BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff, Set.setOf_subset_setOf, Prop.top_eq_true,
     iff_true] at hle
-
-
-
-
+  -- TODO this is where we need the prime ideal theorem for distributive lattices!
   sorry
 
 
