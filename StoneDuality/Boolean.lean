@@ -249,7 +249,7 @@ instance TotallySeparatedSpace.t2Space (α : Type*) [TopologicalSpace α] [Total
     T2Space α where
   t2 x y h := by
     obtain ⟨u, v, h₁, h₂, h₃, h₄, _, h₅⟩ :=
-      TotallySeparatedSpace.isTotallySeparated_univ x (by triv) y (by triv) h
+      TotallySeparatedSpace.isTotallySeparated_univ x (by trivial) y (by trivial) h
     exact ⟨u, v, h₁, h₂, h₃, h₄, h₅⟩
 
 end Spec
@@ -717,7 +717,7 @@ lemma etaObj_bijective (A : BoolAlg) : Function.Bijective (etaObj A) :=
 This is used in the blueprint, doesn't seem to be in mathlib. Probably easiest to construct using
 `BoolAlg.Iso.mk`.
 -/
-lemma BoolAlg.iso_of_bijective {A B : BoolAlg} (f : A ⟶ B) (hf : Function.Bijective f) : A ≅ B where
+def BoolAlg.iso_of_bijective {A B : BoolAlg} (f : A ⟶ B) (hf : Function.Bijective f) : A ≅ B where
   hom := f
   inv := sorry
   hom_inv_id := sorry
@@ -737,12 +737,6 @@ def eta : Spec ⋙ Clp.rightOp ≅ 𝟭 BoolAlgᵒᵖ := by
   change _ = _ ≫ f.op
   simp only [← op_comp]
   congr 1
-  simp [etaObj_iso]
-  unfold BoolAlg.iso_of_bijective
-  change (etaObj Y.unop) ≫ _ = f ≫ etaObj X.unop
-  apply BoundedLatticeHom.ext
-  intro a
-  rfl
 
 section
 
