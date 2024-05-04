@@ -22,32 +22,59 @@ ideal, filter, prime, distributive lattice
 
 -/
 
+
+-- Here starts PR #12651.
+namespace Order
+variable [Preorder α]
+
+open Set
+/-- A directed union of directed sets is directed. -/
+theorem directed_on_sUnion {r} {S : Set (Set α)} (hd : DirectedOn (· ⊆ ·) S)
+    (h : ∀ x ∈ S, DirectedOn r x) : DirectedOn r (⋃₀ S) := by
+    simp only [DirectedOn, mem_sUnion, exists_imp]
+    exact fun a₁ b₁ ⟨hb₁, ha₁⟩ a₂ b₂ ⟨hb₂, ha₂⟩ =>
+    let ⟨z, zS, zb₁, zb₂⟩ := hd b₁ hb₁ b₂ hb₂
+    let ⟨x, xz, xa₁, xa₂⟩ := (h z zS) a₁ (zb₁ ha₁) a₂ (zb₂ ha₂)
+    ⟨x,⟨⟨z, ⟨zS, xz⟩⟩, xa₁, xa₂⟩⟩
+
+/-- A non-empty directed union of ideals of sets is an ideal. -/
+lemma isIdeal_sUnion_directed {C : Set (Set α)} (hidl : ∀ I ∈ C, IsIdeal I) (hC : DirectedOn (· ⊆ ·) C) (hne : C.Nonempty) :
+  IsIdeal C.sUnion := by
+  refine ⟨isLowerSet_sUnion (fun I hI ↦ (hidl I hI).1), Set.nonempty_sUnion.2 ?_,
+  directed_on_sUnion hC (fun J hJ => (hidl J hJ).3)⟩
+  let ⟨I, hI⟩ := hne
+  exact ⟨I, ⟨hI, (hidl I hI).2⟩⟩
+
+/-- A union of a nonempty chain of ideals of sets is an ideal. -/
+lemma isIdeal_sUnion_nechain {C : Set (Set α)} (hidl : ∀ I ∈ C, IsIdeal I)
+    (hC : IsChain (· ⊆ ·) C) (hne : C.Nonempty) : IsIdeal C.sUnion :=
+  isIdeal_sUnion_directed hidl hC.directedOn hne
+
+end Order
+-- Here ends PR #12651
+
 namespace DistribLattice
 
-variable  [DistribLattice α] [BoundedOrder α]
 
 open Order Ideal Set
 
+variable [DistribLattice α] [BoundedOrder α]
 
 variable {F : PFilter α} {I : Ideal α}
 
-/-- A union of a chain of ideals of sets is an ideal. -/
-lemma IsIdeal_sUnion_chain (C : Set (Set α)) (hidl : ∀ I ∈ C, IsIdeal I) (hC : IsChain (· ⊆ ·) C) :
-  IsIdeal C.sUnion := by sorry
-
+-- TODO: this should go in Order/Ideal around line 289
+lemma mem_principal_self (a : α) : a ∈ principal a := mem_principal.2 (le_refl a)
 
 theorem prime_ideal_of_disjoint_filter_ideal
-  (F : PFilter α) (I : Ideal α)
   (hFI : Disjoint (F : Set α) (I : Set α)) :
   ∃ J : Ideal α, (IsPrime J) ∧ I ≤ J ∧ Disjoint (F : Set α) J := by
 
   -- Let S be the set of proper ideals containing I and disjoint from F
-  set S : Set (Set α) := { J : Set α | IsIdeal J ∧ ⊤ ∉ J ∧ I ≤ J ∧ Disjoint (F : Set α) J }
+  set S : Set (Set α) := { J : Set α | IsIdeal J ∧ I ≤ J ∧ Disjoint (F : Set α) J }
 
   -- Then I is in S...
   have IinS : ↑I ∈ S := by
-    refine ⟨Order.Ideal.isIdeal I,
-    ⟨fun h ↦ Set.Nonempty.not_disjoint ⟨⊤, ⟨Order.PFilter.top_mem, h⟩⟩ hFI, by trivial⟩⟩
+    refine ⟨Order.Ideal.isIdeal I, by trivial⟩
 
   -- ...and S contains upper bounds for any non-empty chains.
   have chainub : ∀ c ⊆ S, IsChain (· ⊆ ·) c → c.Nonempty →  ∃ ub ∈ S, ∀ s ∈ c, s ⊆ ub := by
@@ -55,120 +82,128 @@ theorem prime_ideal_of_disjoint_filter_ideal
     use sUnion c
     refine ⟨?_, fun s hs ↦ le_sSup hs⟩
     simp [S]
-    refine ⟨IsIdeal_sUnion_chain c (fun _ hJ ↦ (hcS hJ).1) hcC,
-      ⟨fun J hJ ↦ (hcS hJ).2.1,
-      ⟨?_,
-      fun J hJ ↦ (hcS hJ).2.2.2⟩⟩⟩
-    · obtain ⟨J, hJ⟩ := hcNe
-      exact le_trans (hcS hJ).2.2.1 (le_sSup hJ)
+    let ⟨J, hJ⟩ := hcNe
+    refine ⟨Order.isIdeal_sUnion_nechain (fun _ hJ ↦ (hcS hJ).1) hcC hcNe,
+            ⟨le_trans (hcS hJ).2.1 (le_sSup hJ), fun J hJ ↦ (hcS hJ).2.2⟩⟩
 
   -- Thus, by Zorn's lemma, we can pick a maximal ideal J in S.
   have zorn := zorn_subset_nonempty S chainub I IinS
   have hJ := Exists.choose_spec zorn
   set Jset := Exists.choose zorn
-  obtain ⟨JinS, Jmax⟩ := hJ
-  simp only [ge_iff_le, Set.le_eq_subset, S] at JinS
-  let J := IsIdeal.toIdeal JinS.1
+  obtain ⟨⟨Jidl, IJ, JF⟩, ⟨IJ2,Jmax⟩⟩ := hJ
+  set J := IsIdeal.toIdeal Jidl
   use J
 
+  clear chainub IinS
+
   -- By construction, J contains I and is disjoint from F. It remains to prove that J is prime.
-  refine ⟨?_, JinS.2.2⟩
+  refine ⟨?_, ⟨IJ, JF⟩⟩
 
-  have Jpr : IsProper J := isProper_of_not_mem JinS.2.1
+  -- First note that J is proper: ⊤ ∈ F so ⊤ ∉ J because F and J are disjoint.
+  have Jpr : IsProper J := by
+    apply isProper_of_not_mem ?_
+    use ⊤
+    exact Set.disjoint_left.1 JF F.top_mem
+
   rw [isPrime_iff_mem_or_mem]
-  intros a b
 
-  -- From here on the proof is unfinished and the strategy needs some re-thinking.
+  intros a₁ a₂
   contrapose!
-  rintro ⟨ha, hb⟩ hab
-  let Ja := J ⊔ Ideal.principal a
-  let Jb := J ⊔ Ideal.principal b
-  have ainJa : a ∈ Ja := by
-    simp [Ja]
-    use ⊥
-    simp only [bot_mem, ge_iff_le, bot_le, sup_of_le_right, true_and]
-    use a
-  have binJb : b ∈ Jb := by
-    simp [Jb]
-    use ⊥
-    simp only [bot_mem, ge_iff_le, bot_le, sup_of_le_right, true_and]
-    use b
-  have Ja_ne_J : Ja.carrier ≠ Jset := ne_of_mem_of_not_mem' ainJa ha
-  have J_in_Ja : J ≤ Ja := by simp only [le_sup_left, Ja]
-  -- have JanS : ¬ S Ja := by sorry fun SJa ↦ Ja_ne_J (Jmax Ja SJa J_in_Ja)
-  have Jb_ne_J : Jb.carrier ≠ Jset := ne_of_mem_of_not_mem' binJb hb
-  have J_in_Jb : J ≤ Jb := by simp only [le_sup_left, Jb]
-  -- have JbnS : ¬ S Jb := fun SJb ↦ Jb_ne_J (Jmax Jb SJb J_in_Jb)
-  have IleJa : I ≤ Ja := by
-    refine le_trans ?_ J_in_Ja
-    exact JinS.2.2.1
-  have IleJb : I ≤ Jb := by
-    refine le_trans ?_ J_in_Jb
-    exact JinS.2.2.1
-  have Japroper : ⊤ ∉ Ja := by
-    sorry
-    -- intro j hj y hy hjy
-  have Jbproper : ⊤ ∉ Jb := by sorry
-  have Ja_ndis_F : Set.Nonempty ((Ja : Set α) ∩ F) := by sorry
-    -- simp only [le_eq_subset, Order.Ideal.isIdeal Ja, SetLike.mem_coe, Japroper, not_false_eq_true,
-    --   SetLike.coe_subset_coe, IleJa, true_and, S] at JanS
-    -- rw [Set.nonempty_iff_ne_empty]
-    -- exact JanS
-  have Jb_ndis_F : Set.Nonempty ((Jb : Set α) ∩ F) := by sorry
-    -- simp only [le_eq_subset, Order.Ideal.isIdeal Jb, SetLike.mem_coe, Jbproper, not_false_eq_true,
-    --   SetLike.coe_subset_coe, IleJb, true_and, S] at JbnS
-    -- rw [Set.nonempty_iff_ne_empty]
-    -- exact JbnS
-  apply inter_nonempty_iff_exists_right.1 at Ja_ndis_F
-  apply inter_nonempty_iff_exists_right.1 at Jb_ndis_F
-  obtain ⟨c, ⟨hcF, hcJa⟩⟩ := Ja_ndis_F
-  obtain ⟨d, ⟨hdF, hdJb⟩⟩ := Jb_ndis_F
-  have c_meet_d_inF := PFilter.inf_mem hcF hdF
-  have cd_le_ab : c ⊓ d ≤ a ⊓ b := by sorry
-  have : a ⊓ b ∈ F := PFilter.mem_of_le cd_le_ab c_meet_d_inF
-  have habJF : a ⊓ b ∈ Jset ∩ F := ⟨hab, this⟩
-  sorry
-  -- exact (Set.mem_empty_iff_false _).1 habJF
+
+  -- Suppose that a₁ ∉ J, a₂ ∉ J. We need to prove that a₁ ⊔ a₂ ∉ J.
+  intro ⟨ha₁, ha₂⟩
+
+  -- Consider the ideals J₁, J₂ generated by J ∪ {a₁} and J ∪ {a₂}, respectively.
+  let J₁ := J ⊔ principal a₁
+  let J₂ := J ⊔ principal a₂
+
+  have IJ' : I ≤ J := IJ
+  -- For each i, Jᵢ is an ideal that contains I, and is not equal to J.
+  have IJ₁ : I ≤ J₁ := le_trans IJ' le_sup_left
+  have IJ₂ : I ≤ J₂ := le_trans IJ' le_sup_left
+  have a₁J₁ : a₁ ∈ J₁ :=
+    mem_of_subset_of_mem (le_sup_right : principal _ ≤ _) (mem_principal_self _)
+  have a₂J₂ : a₂ ∈ J₂ :=
+    mem_of_subset_of_mem (le_sup_right : principal _ ≤ _) (mem_principal_self _)
+
+  have JsubJ₁ : J ≤ J₁ := le_sup_left
+  have JsubJ₂ : J ≤ J₂ := le_sup_left
+  have J₁J : J₁ ≠ J := by refine ne_of_mem_of_not_mem' a₁J₁ ha₁
+  have J₂J : J₂ ≠ J := by refine ne_of_mem_of_not_mem' a₂J₂ ha₂
+
+  have Jcoe : J = Jset := by rfl
+  -- Therefore, since J is maximal, we must have Jᵢ ∉ S.
+  have J₁S : ↑J₁ ∉ S := by
+    intro h
+    apply J₁J
+    apply Jmax at h
+    have := h JsubJ₁
+    -- TODO fix this coercion problem
+    rw [←Jcoe] at this
+    simp only [SetLike.coe_set_eq] at this
+    exact this
+  have J₂S : ↑J₂ ∉ S := by
+    intro h
+    apply J₂J
+    apply Jmax at h
+    have := h JsubJ₂
+    -- TODO fix this coercion problem
+    rw [←Jcoe] at this
+    simp only [SetLike.coe_set_eq] at this
+    exact this
+
+  -- Since Jᵢ is an ideal that contains I, we have that Jᵢ is not disjoint from F.
+  have J₁F : ¬ (Disjoint (F : Set α) J₁) := by
+    intro hdis
+    apply J₁S
+    simp only [le_eq_subset, mem_setOf_eq, SetLike.coe_subset_coe, S]
+    exact ⟨J₁.isIdeal, IJ₁, hdis⟩
+
+  have J₂F : ¬ (Disjoint (F : Set α) J₂) := by
+    intro hdis
+    apply J₂S
+    simp only [le_eq_subset, mem_setOf_eq, SetLike.coe_subset_coe, S]
+    exact ⟨J₂.isIdeal, IJ₂, hdis⟩
+
+  -- Thus, pick cᵢ ∈ F ∩ Jᵢ.
+  obtain ⟨c₁, ⟨hc₁F, hc₁J₁⟩⟩ := Set.not_disjoint_iff.1 J₁F
+  obtain ⟨c₂, ⟨hc₂F, hc₂J₂⟩⟩ := Set.not_disjoint_iff.1 J₂F
+
+  -- Using the definition of Jᵢ, we can pick bᵢ ∈ J such that cᵢ ≤ bᵢ ⊔ aᵢ.
+
+  -- TODO: the little argument about primed a₁ and a₂ could be a lemma
+  obtain ⟨b₁, ⟨b₁J, a₁', ha₁', hcba₁'⟩⟩ := Ideal.mem_sup.1 hc₁J₁
+  simp only [mem_principal] at ha₁'
+  have hcba₁ : c₁ ≤ b₁ ⊔ a₁ := le_trans hcba₁' (sup_le_sup_left ha₁' b₁)
+  clear ha₁' hcba₁' a₁'
+
+  obtain ⟨b₂, ⟨b₂J, a₂', ha₂', hcba₂'⟩⟩ := Ideal.mem_sup.1 hc₂J₂
+  simp only [mem_principal] at ha₂'
+  have hcba₂ : c₂ ≤ b₂ ⊔ a₂ := le_trans hcba₂' (sup_le_sup_left ha₂' b₂)
+  clear ha₂' hcba₂' a₂'
 
 
+  -- Since J is an ideal, we have b := b₁ ⊔ b₂ ∈ J.
+  let b := b₁ ⊔ b₂
+  have bJ : b ∈ J := sup_mem b₁J b₂J
 
--- below a sketch for a way that one may separate definitions (but not sure yet how it works with Zorn)
+  have ba₁a₂F : b ⊔ (a₁ ⊓ a₂) ∈ F := by sorry
+  -- Now we compute: b ⊔ (a₁ ⊓ a₂) = (b ⊔ a₁) ⊓ (b ⊔ a₂) by distributivity
+  -- and b ⊔ aᵢ ≥ bᵢ ⊔ aᵢ by definition of b and monotonicity of ⊔.
+  -- Thus, b ⊔ (a₁ ⊓ a₂) ≥ (b₁ ⊔ a₁) ⊓ (b₂ ⊔ a₂) ≥ c₁ ⊓ c₂,
+  -- with the last inequality holding by monotonicity of inf.
 
--- def separatingSet (hFI : Disjoint (F : Set α) I) : Set α := by
---   set S : Set (Set α) := { J : Set α | IsIdeal J ∧ ⊤ ∉ J ∧ I ≤ J ∧ Disjoint (F : Set α) J }
---   have IS : ↑I ∈ S := by
---     refine ⟨Order.Ideal.isIdeal I,
---     ⟨fun h ↦ Set.Nonempty.not_disjoint ⟨⊤, ⟨Order.PFilter.top_mem, h⟩⟩ hFI, by trivial⟩⟩
+  -- Note that c₁ ⊓ c₂ ∈ F, since c₁ and c₂ are both in F and F is a filter.
+  -- Since F is an upper set, it now follows that b ⊔ (a₁ ⊓ a₂) ∈ F.
 
---   have chainub : ∀ c ⊆ S, IsChain (· ⊆ ·) c → c.Nonempty →  ∃ ub ∈ S, ∀ s ∈ c, s ⊆ ub := by
---     intros c hcS hcC hcNe
+  -- Now, if we would have a₁ ⊓ a₂ ∈ J, then since J is an ideal and b ∈ J, we would also get
+  -- b ⊔ (a₁ ⊓ a₂) ∈ J. But this contradicts that J is disjoint from F.
 
---     use sUnion c
---     refine ⟨?_, fun s hs ↦ le_sSup hs⟩
---     simp [S]
---     refine ⟨IsIdeal_sUnion_chain c (fun _ hJ ↦ (hcS hJ).1) hcC,
---       ⟨fun J hJ ↦ (hcS hJ).2.1,
---       ⟨?_,
---       fun J hJ ↦ (hcS hJ).2.2.2⟩⟩⟩
---     · obtain ⟨J, hJ⟩ := hcNe
---       exact le_trans (hcS hJ).2.2.1 (le_sSup hJ)
-
---   have zorn := zorn_subset_nonempty S chainub I IS
---   -- have hJ := Exists.choose_spec zorn
---   use Exists.choose zorn
-
--- def separatingIdeal (hFI : Disjoint (F : Set α) I) : Ideal α := by sorry
-
--- def separatingIdeal_isPrime (hFI : Disjoint (F : Set α) I) : IsPrime (separatingIdeal hFI) := by sorry
-
--- def separator (hFI : Disjoint (F : Set α) I) : PrimePair α :=
---   Order.Ideal.IsPrime.toPrimePair (separatingIdeal_isPrime hFI)
-
--- variable (hFI : Disjoint (F : Set α) I)
-
-
--- theorem separatorI_contains_I : (I : Set α) ⊆ (separator hFI).I := by sorry
--- theorem separatorF_contains_F : (F : Set α) ⊆ (separator hFI).F := by sorry
-
--- theorem separatorI_isPrime : IsPrime (separator hFI).I := by sorry
--- theorem separatorF_isPrime : Order.PFilter.IsPrime (separator hFI).F := by sorry
+  intro ha₁a₂
+  have ba₁a₂J := sup_mem bJ ha₁a₂
+  have notdis : ¬ (Disjoint (F :Set α) J) := by
+    rw [Set.not_disjoint_iff]
+    use b ⊔ (a₁ ⊓ a₂)
+    exact ⟨ba₁a₂F, ba₁a₂J⟩
+  exact notdis JF
+  done
