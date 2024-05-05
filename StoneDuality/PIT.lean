@@ -61,6 +61,10 @@ variable {F : PFilter α} {I : Ideal α}
 -- TODO: this should go in Order/Ideal around line 289
 lemma mem_principal_self (a : α) : a ∈ principal a := mem_principal.2 (le_refl a)
 
+lemma mem_ideal_sup_principal (a b : α) (J : Ideal α) : b ∈ J ⊔ principal a ↔ ∃ j ∈ J, b ≤ j ⊔ a :=
+  ⟨fun ⟨j, ⟨jJ, _, ha', bja'⟩⟩ => ⟨j, jJ, le_trans bja' (sup_le_sup_left ha' j)⟩,
+    fun ⟨j, hj, hbja⟩ => ⟨j, hj, a, le_refl a, hbja⟩⟩
+
 theorem prime_ideal_of_disjoint_filter_ideal
   (hFI : Disjoint (F : Set α) (I : Set α)) :
   ∃ J : Ideal α, (IsPrime J) ∧ I ≤ J ∧ Disjoint (F : Set α) J := by
@@ -86,7 +90,7 @@ theorem prime_ideal_of_disjoint_filter_ideal
   have zorn := zorn_subset_nonempty S chainub I IinS
   have hJ := Exists.choose_spec zorn
   set Jset := Exists.choose zorn
-  obtain ⟨⟨Jidl, IJ, JF⟩, ⟨IJ2,Jmax⟩⟩ := hJ
+  obtain ⟨⟨Jidl, IJ, JF⟩, ⟨_, Jmax⟩⟩ := hJ
   set J := IsIdeal.toIdeal Jidl
   use J
 
@@ -162,21 +166,12 @@ theorem prime_ideal_of_disjoint_filter_ideal
     exact ⟨J₂.isIdeal, IJ₂, hdis⟩
 
   -- Thus, pick cᵢ ∈ F ∩ Jᵢ.
-  obtain ⟨c₁, ⟨c₁F, hc₁J₁⟩⟩ := Set.not_disjoint_iff.1 J₁F
-  obtain ⟨c₂, ⟨c₂F, hc₂J₂⟩⟩ := Set.not_disjoint_iff.1 J₂F
+  obtain ⟨c₁, ⟨c₁F, c₁J₁⟩⟩ := Set.not_disjoint_iff.1 J₁F
+  obtain ⟨c₂, ⟨c₂F, c₂J₂⟩⟩ := Set.not_disjoint_iff.1 J₂F
 
   -- Using the definition of Jᵢ, we can pick bᵢ ∈ J such that cᵢ ≤ bᵢ ⊔ aᵢ.
-
-  -- TODO: this little argument about primed a₁ and a₂ could be a lemma
-  obtain ⟨b₁, ⟨b₁J, a₁', ha₁', cba₁'⟩⟩ := Ideal.mem_sup.1 hc₁J₁
-  simp only [mem_principal] at ha₁'
-  have cba₁ : c₁ ≤ b₁ ⊔ a₁ := le_trans cba₁' (sup_le_sup_left ha₁' b₁)
-  clear ha₁' cba₁' a₁'
-
-  obtain ⟨b₂, ⟨b₂J, a₂', ha₂', cba₂'⟩⟩ := Ideal.mem_sup.1 hc₂J₂
-  simp only [mem_principal] at ha₂'
-  have cba₂ : c₂ ≤ b₂ ⊔ a₂ := le_trans cba₂' (sup_le_sup_left ha₂' b₂)
-  clear ha₂' cba₂' a₂'
+  obtain ⟨b₁, ⟨b₁J, cba₁⟩⟩ := (mem_ideal_sup_principal a₁ c₁ J).1 c₁J₁
+  obtain ⟨b₂, ⟨b₂J, cba₂⟩⟩ := (mem_ideal_sup_principal a₂ c₂ J).1 c₂J₂
 
   -- Since J is an ideal, we have b := b₁ ⊔ b₂ ∈ J.
   let b := b₁ ⊔ b₂
@@ -197,14 +192,12 @@ theorem prime_ideal_of_disjoint_filter_ideal
   -- Since F is an upper set, it now follows that b ⊔ (a₁ ⊓ a₂) ∈ F.
   have ba₁a₂F : b ⊔ (a₁ ⊓ a₂) ∈ F := PFilter.mem_of_le ineq (PFilter.inf_mem c₁F c₂F)
 
-  -- Now, if we would have a₁ ⊓ a₂ ∈ J, then since J is an ideal and b ∈ J, we would also get
+  -- Now, if we would have a₁ ⊓ a₂ ∈ J, then, since J is an ideal and b ∈ J, we would also get
   -- b ⊔ (a₁ ⊓ a₂) ∈ J. But this contradicts that J is disjoint from F.
 
   intro ha₁a₂
-  have ba₁a₂J := sup_mem bJ ha₁a₂
-  have notdis : ¬ (Disjoint (F :Set α) J) := by
+  have notdis : ¬ (Disjoint (F : Set α) J) := by
     rw [Set.not_disjoint_iff]
     use b ⊔ (a₁ ⊓ a₂)
-    exact ⟨ba₁a₂F, ba₁a₂J⟩
+    exact ⟨ba₁a₂F, sup_mem bJ ha₁a₂⟩
   exact notdis JF
-  done
