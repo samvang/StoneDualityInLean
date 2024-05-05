@@ -23,38 +23,34 @@ ideal, filter, prime, distributive lattice
 -/
 
 
--- Here starts PR #12651.
+-- Here starts material from PR #12651.
 namespace Order
 variable [Preorder α]
 
 open Set
 /-- A directed union of directed sets is directed. -/
-theorem directed_on_sUnion {r} {S : Set (Set α)} (hd : DirectedOn (· ⊆ ·) S)
+theorem directedOn_sUnion {r} {S : Set (Set α)} (hd : DirectedOn (· ⊆ ·) S)
     (h : ∀ x ∈ S, DirectedOn r x) : DirectedOn r (⋃₀ S) := by
-    simp only [DirectedOn, mem_sUnion, exists_imp]
-    exact fun a₁ b₁ ⟨hb₁, ha₁⟩ a₂ b₂ ⟨hb₂, ha₂⟩ =>
-    let ⟨z, zS, zb₁, zb₂⟩ := hd b₁ hb₁ b₂ hb₂
-    let ⟨x, xz, xa₁, xa₂⟩ := (h z zS) a₁ (zb₁ ha₁) a₂ (zb₂ ha₂)
-    ⟨x,⟨⟨z, ⟨zS, xz⟩⟩, xa₁, xa₂⟩⟩
+    rw [sUnion_eq_iUnion]
+    exact directed_on_iUnion (directedOn_iff_directed.mp hd) (fun i ↦ h i.1 i.2)
 
 /-- A non-empty directed union of ideals of sets is an ideal. -/
-lemma isIdeal_sUnion_directed {C : Set (Set α)} (hidl : ∀ I ∈ C, IsIdeal I) (hC : DirectedOn (· ⊆ ·) C) (hne : C.Nonempty) :
+lemma isIdeal_sUnion_of_directedOn {C : Set (Set α)} (hidl : ∀ I ∈ C, IsIdeal I) (hC : DirectedOn (· ⊆ ·) C) (hne : C.Nonempty) :
   IsIdeal C.sUnion := by
   refine ⟨isLowerSet_sUnion (fun I hI ↦ (hidl I hI).1), Set.nonempty_sUnion.2 ?_,
-  directed_on_sUnion hC (fun J hJ => (hidl J hJ).3)⟩
+  directedOn_sUnion hC (fun J hJ => (hidl J hJ).3)⟩
   let ⟨I, hI⟩ := hne
   exact ⟨I, ⟨hI, (hidl I hI).2⟩⟩
 
 /-- A union of a nonempty chain of ideals of sets is an ideal. -/
-lemma isIdeal_sUnion_nechain {C : Set (Set α)} (hidl : ∀ I ∈ C, IsIdeal I)
+lemma isIdeal_sUnion_of_isChain {C : Set (Set α)} (hidl : ∀ I ∈ C, IsIdeal I)
     (hC : IsChain (· ⊆ ·) C) (hne : C.Nonempty) : IsIdeal C.sUnion :=
-  isIdeal_sUnion_directed hidl hC.directedOn hne
+  isIdeal_sUnion_of_directedOn hidl hC.directedOn hne
 
 end Order
--- Here ends PR #12651
+-- Here ends material from PR #12651
 
 namespace DistribLattice
-
 
 open Order Ideal Set
 
@@ -83,7 +79,7 @@ theorem prime_ideal_of_disjoint_filter_ideal
     refine ⟨?_, fun s hs ↦ le_sSup hs⟩
     simp [S]
     let ⟨J, hJ⟩ := hcNe
-    refine ⟨Order.isIdeal_sUnion_nechain (fun _ hJ ↦ (hcS hJ).1) hcC hcNe,
+    refine ⟨Order.isIdeal_sUnion_of_isChain (fun _ hJ ↦ (hcS hJ).1) hcC hcNe,
             ⟨le_trans (hcS hJ).2.1 (le_sSup hJ), fun J hJ ↦ (hcS hJ).2.2⟩⟩
 
   -- Thus, by Zorn's lemma, we can pick a maximal ideal J in S.
@@ -166,35 +162,40 @@ theorem prime_ideal_of_disjoint_filter_ideal
     exact ⟨J₂.isIdeal, IJ₂, hdis⟩
 
   -- Thus, pick cᵢ ∈ F ∩ Jᵢ.
-  obtain ⟨c₁, ⟨hc₁F, hc₁J₁⟩⟩ := Set.not_disjoint_iff.1 J₁F
-  obtain ⟨c₂, ⟨hc₂F, hc₂J₂⟩⟩ := Set.not_disjoint_iff.1 J₂F
+  obtain ⟨c₁, ⟨c₁F, hc₁J₁⟩⟩ := Set.not_disjoint_iff.1 J₁F
+  obtain ⟨c₂, ⟨c₂F, hc₂J₂⟩⟩ := Set.not_disjoint_iff.1 J₂F
 
   -- Using the definition of Jᵢ, we can pick bᵢ ∈ J such that cᵢ ≤ bᵢ ⊔ aᵢ.
 
-  -- TODO: the little argument about primed a₁ and a₂ could be a lemma
-  obtain ⟨b₁, ⟨b₁J, a₁', ha₁', hcba₁'⟩⟩ := Ideal.mem_sup.1 hc₁J₁
+  -- TODO: this little argument about primed a₁ and a₂ could be a lemma
+  obtain ⟨b₁, ⟨b₁J, a₁', ha₁', cba₁'⟩⟩ := Ideal.mem_sup.1 hc₁J₁
   simp only [mem_principal] at ha₁'
-  have hcba₁ : c₁ ≤ b₁ ⊔ a₁ := le_trans hcba₁' (sup_le_sup_left ha₁' b₁)
-  clear ha₁' hcba₁' a₁'
+  have cba₁ : c₁ ≤ b₁ ⊔ a₁ := le_trans cba₁' (sup_le_sup_left ha₁' b₁)
+  clear ha₁' cba₁' a₁'
 
-  obtain ⟨b₂, ⟨b₂J, a₂', ha₂', hcba₂'⟩⟩ := Ideal.mem_sup.1 hc₂J₂
+  obtain ⟨b₂, ⟨b₂J, a₂', ha₂', cba₂'⟩⟩ := Ideal.mem_sup.1 hc₂J₂
   simp only [mem_principal] at ha₂'
-  have hcba₂ : c₂ ≤ b₂ ⊔ a₂ := le_trans hcba₂' (sup_le_sup_left ha₂' b₂)
-  clear ha₂' hcba₂' a₂'
-
+  have cba₂ : c₂ ≤ b₂ ⊔ a₂ := le_trans cba₂' (sup_le_sup_left ha₂' b₂)
+  clear ha₂' cba₂' a₂'
 
   -- Since J is an ideal, we have b := b₁ ⊔ b₂ ∈ J.
   let b := b₁ ⊔ b₂
   have bJ : b ∈ J := sup_mem b₁J b₂J
 
-  have ba₁a₂F : b ⊔ (a₁ ⊓ a₂) ∈ F := by sorry
+  have ineq : c₁ ⊓ c₂ ≤ b ⊔ (a₁ ⊓ a₂) :=
   -- Now we compute: b ⊔ (a₁ ⊓ a₂) = (b ⊔ a₁) ⊓ (b ⊔ a₂) by distributivity
   -- and b ⊔ aᵢ ≥ bᵢ ⊔ aᵢ by definition of b and monotonicity of ⊔.
   -- Thus, b ⊔ (a₁ ⊓ a₂) ≥ (b₁ ⊔ a₁) ⊓ (b₂ ⊔ a₂) ≥ c₁ ⊓ c₂,
   -- with the last inequality holding by monotonicity of inf.
+  calc
+    c₁ ⊓ c₂ ≤ (b₁ ⊔ a₁) ⊓ (b₂ ⊔ a₂) := inf_le_inf cba₁ cba₂
+    _       ≤ (b  ⊔ a₁) ⊓ (b  ⊔ a₂) := by
+      apply inf_le_inf <;> apply sup_le_sup_right; exact le_sup_left; exact le_sup_right
+    _       = b ⊔ (a₁ ⊓ a₂) := (sup_inf_left b a₁ a₂).symm
 
   -- Note that c₁ ⊓ c₂ ∈ F, since c₁ and c₂ are both in F and F is a filter.
   -- Since F is an upper set, it now follows that b ⊔ (a₁ ⊓ a₂) ∈ F.
+  have ba₁a₂F : b ⊔ (a₁ ⊓ a₂) ∈ F := PFilter.mem_of_le ineq (PFilter.inf_mem c₁F c₂F)
 
   -- Now, if we would have a₁ ⊓ a₂ ∈ J, then since J is an ideal and b ∈ J, we would also get
   -- b ⊔ (a₁ ⊓ a₂) ∈ J. But this contradicts that J is disjoint from F.
