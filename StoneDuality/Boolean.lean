@@ -594,6 +594,37 @@ lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
       rw [fiT] at leq
       exact eq_top_iff.mpr leq
 
+def hom_of_prime_ideal {A : BoolAlg} { I : Order.Ideal A } (hI : Order.Ideal.IsPrime I) : A ⟶ BoolAlg.of Prop where
+  toFun := fun x ↦ x ∉ I
+  map_sup' := by
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+    Order.Ideal.sup_mem_iff, sup_Prop_eq, eq_iff_iff, not_and]
+    intro a b
+    refine ⟨?_, ?_⟩
+    all_goals contrapose!; simp only [imp_self]
+
+  map_inf' := by
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, inf_Prop_eq, eq_iff_iff]
+    intro a b
+    constructor
+    · contrapose!
+      rw [← or_iff_not_imp_left, or_imp]
+      refine ⟨fun ha => ?_, fun hb => ?_⟩
+      sorry
+      sorry
+    · contrapose!
+      rw [← or_iff_not_imp_left]
+      exact hI.mem_or_mem
+
+
+  map_top' := by
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+    eq_iff_iff, Prop.top_eq_true, iff_true]
+    exact hI.1.top_not_mem
+
+  map_bot' := by
+    simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+      Order.Ideal.bot_mem, not_true_eq_false, eq_iff_iff, false_iff, Prop.bot_eq_false]
 
 lemma etaObjObjSet_orderemb {A : BoolAlg} (a b : A) (hle : etaObjObjSet a ⊆ etaObjObjSet b) : a ≤ b := by
   simp only [Profinite.coe_of, CompHaus.coe_of, etaObjObjSet, BddDistLat.coe_toBddLat,
