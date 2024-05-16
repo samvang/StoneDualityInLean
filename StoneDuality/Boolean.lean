@@ -1,6 +1,7 @@
 import Mathlib.Topology.Category.Profinite.Basic
 import Mathlib.Order.Category.BoolAlg
 import StoneDuality.HomClosed
+import StoneDuality.PIT
 
 open CategoryTheory TopologicalSpace
 
@@ -599,7 +600,18 @@ lemma etaObjObjSet_orderemb {A : BoolAlg} (a b : A) (hle : etaObjObjSet a ⊆ et
     BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom,
     BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff, Set.setOf_subset_setOf, Prop.top_eq_true,
     iff_true] at hle
-  -- TODO this is where we need the prime ideal theorem for distributive lattices!
+  -- We now apply the prime ideal theorem for distributive lattices.
+  by_contra hab
+  let F := Order.PFilter.principal a
+  let I := Order.Ideal.principal b
+  have hFI : Disjoint (F : Set A) I := by
+    contrapose! hab with hdis
+    rw [Set.not_disjoint_iff] at hdis
+    exact le_trans hdis.2.1 hdis.2.2
+  obtain ⟨J, Jpr, IJ, FJ⟩ := DistribLattice.prime_ideal_of_disjoint_filter_ideal hFI
+  let fJ : A -> BoolAlg.of Prop := fun a => ¬ (a ∈ J)
+  -- TODO prove that fJ is a homomorphism because J is a prime ideal (should be separate lemma)
+  -- have := hle fJ
   sorry
 
 
