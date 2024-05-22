@@ -542,8 +542,6 @@ def IsClopen_etaObjObjSet {A : BoolAlg} (a : A)  : IsClopen (etaObjObjSet a) := 
   · rw [← isOpen_compl_iff, ← eta_neg]; exact IsOpen_etaObjObjSet aᶜ
   · exact IsOpen_etaObjObjSet a
 
-
-
 def etaObjObj {A : BoolAlg} (a : A) : (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) where
   carrier := etaObjObjSet a
   isClopen' := IsClopen_etaObjObjSet a
@@ -594,7 +592,8 @@ lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
       rw [fiT] at leq
       exact eq_top_iff.mpr leq
 
-def hom_of_prime_ideal {A : BoolAlg} { I : Order.Ideal A } (hI : Order.Ideal.IsPrime I) : A ⟶ BoolAlg.of Prop where
+def hom_of_prime_ideal {A : BoolAlg} {I : Order.Ideal A} (hI : Order.Ideal.IsPrime I) :
+  A ⟶ BoolAlg.of Prop where
   toFun := fun x ↦ x ∉ I
   map_sup' := by
     simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
@@ -609,13 +608,10 @@ def hom_of_prime_ideal {A : BoolAlg} { I : Order.Ideal A } (hI : Order.Ideal.IsP
     constructor
     · contrapose!
       rw [← or_iff_not_imp_left, or_imp]
-      refine ⟨fun ha => ?_, fun hb => ?_⟩
-      sorry
-      sorry
+      exact ⟨fun ha => I.lower inf_le_left ha, fun hb => I.lower inf_le_right hb⟩
     · contrapose!
       rw [← or_iff_not_imp_left]
       exact hI.mem_or_mem
-
 
   map_top' := by
     simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
@@ -626,25 +622,34 @@ def hom_of_prime_ideal {A : BoolAlg} { I : Order.Ideal A } (hI : Order.Ideal.IsP
     simp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
       Order.Ideal.bot_mem, not_true_eq_false, eq_iff_iff, false_iff, Prop.bot_eq_false]
 
-lemma etaObjObjSet_orderemb {A : BoolAlg} (a b : A) (hle : etaObjObjSet a ⊆ etaObjObjSet b) : a ≤ b := by
-  simp only [Profinite.coe_of, CompHaus.coe_of, etaObjObjSet, BddDistLat.coe_toBddLat,
-    BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, SupHom.toFun_eq_coe, LatticeHom.coe_toSupHom,
-    BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff, Set.setOf_subset_setOf, Prop.top_eq_true,
-    iff_true] at hle
+lemma etaObjObjSet_orderemb {A : BoolAlg} {a b : A} (hle : etaObjObjSet a ⊆ etaObjObjSet b) : a ≤ b := by
   -- We now apply the prime ideal theorem for distributive lattices.
-  by_contra hab
+  contrapose! hle with hab
   let F := Order.PFilter.principal a
   let I := Order.Ideal.principal b
   have hFI : Disjoint (F : Set A) I := by
     contrapose! hab with hdis
     rw [Set.not_disjoint_iff] at hdis
-    exact le_trans hdis.2.1 hdis.2.2
-  obtain ⟨J, Jpr, IJ, FJ⟩ := DistribLattice.prime_ideal_of_disjoint_filter_ideal hFI
-  let fJ : A -> BoolAlg.of Prop := fun a => ¬ (a ∈ J)
-  -- TODO prove that fJ is a homomorphism because J is a prime ideal (should be separate lemma)
-  -- have := hle fJ
-  sorry
+    let ⟨x, xF, xI⟩ := hdis
+    exact le_trans xF xI
 
+  obtain ⟨J, Jpr, IJ, FJ⟩ := DistribLattice.prime_ideal_of_disjoint_filter_ideal hFI
+  rw [Set.not_subset]
+  use hom_of_prime_ideal Jpr
+
+  -- TODO fix these coercion problems
+  simp only [etaObjObjSet, hom_of_prime_ideal, Set.mem_setOf_eq, SupHom.toFun_eq_coe, BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of,
+    LatticeHom.coe_toSupHom, BoundedLatticeHom.coe_toLatticeHom, eq_iff_iff, Prop.top_eq_true, iff_true]
+  dsimp only [BddDistLat.coe_toBddLat, BoolAlg.coe_toBddDistLat, BoolAlg.coe_of, sup_Prop_eq, id_eq,
+    SupHom.toFun_eq_coe, inf_Prop_eq, LatticeHom.coe_toSupHom, BoundedLatticeHom.coe_mk,
+    LatticeHom.coe_mk, SupHom.coe_mk]
+
+  refine ⟨?_, ?_⟩
+  · apply Set.disjoint_left.1 FJ
+    simp only [SetLike.mem_coe, Order.PFilter.mem_principal, le_refl, F]
+  · rw [Decidable.not_not]
+    apply IJ
+    simp only [SetLike.mem_coe, Order.Ideal.mem_principal, le_refl, I]
 
 lemma etaObjObj_surjective {A : BoolAlg} (K : Clopens (Profinite.of (A ⟶ BoolAlg.of Prop))) :
   ∃ a, etaObjObj a = K := by
@@ -743,29 +748,38 @@ def etaObj (A : BoolAlg) : A ⟶ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolA
 lemma etaObj_eq {A : BoolAlg} (a : A) : ((etaObj A).toFun a).carrier = { x | x.toFun a = ⊤ } := by rfl
 
 -- TODO: probably easier to formulate as etaObjObj_injective
-lemma etaObj_injective (A : BoolAlg) : Function.Injective (etaObj A) := sorry
+lemma etaObj_injective (A : BoolAlg) : Function.Injective (etaObj A) := by
+  intro a b hab
+  apply le_antisymm
 
--- TODO: just apply etaObjObj_surjective
-lemma etaObj_surjective (A : BoolAlg) : Function.Surjective (etaObj A) := by sorry
+  · apply etaObjObjSet_orderemb
+    have := le_of_eq hab
+    exact this
+  · apply etaObjObjSet_orderemb
+    have := ge_of_eq hab
+    exact this
 
-
+lemma etaObj_surjective (A : BoolAlg) : Function.Surjective (etaObj A) := etaObjObj_surjective
 
 lemma etaObj_bijective (A : BoolAlg) : Function.Bijective (etaObj A) :=
   ⟨etaObj_injective A, etaObj_surjective A⟩
 
-/--
-This is used in the blueprint, doesn't seem to be in mathlib. Probably easiest to construct using
-`BoolAlg.Iso.mk`.
--/
-def BoolAlg.iso_of_bijective {A B : BoolAlg} (f : A ⟶ B) (hf : Function.Bijective f) : A ≅ B where
-  hom := f
-  inv := sorry
-  hom_inv_id := sorry
-  inv_hom_id := sorry
+
+lemma etaObj_monotone (A : BoolAlg) : Monotone (etaObj A) := OrderHomClass.mono (etaObj A)
+
+def etaObj_orderEmb (A : BoolAlg) : A ↪o BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop))) where
+  toFun := etaObj A
+  inj' := etaObj_injective A
+  map_rel_iff' := by
+    dsimp only [Profinite.coe_of, CompHaus.coe_of, BoolAlg.coe_of, Function.Embedding.coeFn_mk]
+    intro a b
+    exact ⟨fun hab => etaObjObjSet_orderemb hab, fun hab => etaObj_monotone A hab⟩
+
+
+def etaObj_orderIso (A : BoolAlg) : A ≃o (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) := RelIso.ofSurjective (etaObj_orderEmb A) (etaObj_surjective A)
 
 def etaObj_iso (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
-  BoolAlg.iso_of_bijective (etaObj A) (etaObj_bijective A)
-  -- BoolAlg.Iso.mk (etaObj_orderIso A)
+  BoolAlg.Iso.mk (etaObj_orderIso A)
 
 def etaObj_op (A : BoolAlgᵒᵖ) : (Spec ⋙ Clp.rightOp).obj A ≅ (𝟭 BoolAlgᵒᵖ).obj A :=
   (etaObj_iso A.unop).op
@@ -778,29 +792,7 @@ def eta : Spec ⋙ Clp.rightOp ≅ 𝟭 BoolAlgᵒᵖ := by
   simp only [← op_comp]
   congr 1
 
-section
-
-/-!
-This approach might also work, but if the above works, ignore this.
--/
-
-
-def etaObj_orderEmb (A : BoolAlg) : A ↪o BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop))) where
-  toFun := etaObj A
-  inj' := etaObj_injective A
-  map_rel_iff' := sorry
-
-def etaObj_orderIso (A : BoolAlg) : A ≃o (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) := RelIso.ofSurjective (etaObj_orderEmb A) (etaObj_surjective A)
-
-
-def etaObj_iso' (A : BoolAlg) : A ≅ (BoolAlg.of (Clopens (Profinite.of (A ⟶ BoolAlg.of Prop)))) :=
-  BoolAlg.Iso.mk (etaObj_orderIso A)
-
--- etc.
-
-end
-
-/- If we want to know that `epsilon` and `eta` are actually the unit and counit of
+/- TODO: If we want to know that `epsilon` and `eta` are actually the unit and counit of
    this equivalence, then we need to prove: -/
 
 /- theorem triangle : ∀ (X : Profinite),
@@ -831,11 +823,6 @@ def Equiv : Profinite ≌ BoolAlgᵒᵖ where
   unitIso := epsilon
   counitIso := eta
   functor_unitIso_comp := sorry
--/
-/-
-If we don't care whether `epsilon` and `eta` are actually the unit/counit of this adjoint
-equivalence, then we don't need to prove the triangle law, and can use the following approach
-instead:
 -/
 
 def Equiv : Profinite ≌ BoolAlgᵒᵖ := CategoryTheory.Equivalence.mk Clp.rightOp Spec epsilon eta
