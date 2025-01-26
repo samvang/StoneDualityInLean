@@ -571,29 +571,17 @@ lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
     apply Iff.intro
     · let p := λ H => Finset.sup H f = ⊤ → ∃ i ∈ H, f i = ⊤
 
-      have empty : p ∅ := by
-        simp [p]
-        intro h
-        rw [← true_iff_false]
-        exact id (Iff.symm h)
+      have empty : p ∅ := by tauto
 
       have insert : ∀ a : I, ∀ t : Finset I, a ∉ t → p t → p (insert a t) := by
-        intro a t _ hpt
+        intro a _ _ _
         by_cases h : f a
 
         · simp [p]
-          intro _
-          apply Or.inl
-          rw [propext (iff_true_left h)]
-          trivial
+          tauto
 
         · simp [p]
-          intro hi
-          apply Or.inr
-          have h' : Finset.sup t f := or_cancel_left (of_iff_true hi) h
-
-          simp [p] at hpt
-          exact hpt (iff_true_intro h')
+          tauto
 
       exact Finset.induction_on F empty insert
 
