@@ -1,3 +1,13 @@
+/-
+Copyright (c) 2024 Sam van Gool. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Dagur Asgeirsson, Sam van Gool, Tomáš Jakl (*), Filippo A. E. Nuccio
+
+(*) Tomáš Jakl was funded by the EXPRO project 20-31529X awarded by the Czech
+    Science Foundation and was also supported by the Institute of Mathematics,
+    Czech Academy of Sciences (RVO 67985840).
+-/
+
 import Mathlib.Topology.Category.Profinite.Basic
 import Mathlib.Order.Category.BoolAlg
 import StoneDuality.HomClosed
