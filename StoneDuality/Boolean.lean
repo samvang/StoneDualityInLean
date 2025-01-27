@@ -576,12 +576,7 @@ lemma top_sup_prime {I : Type} (F : Finset I) (f : I → Prop) :
       have insert : ∀ a : I, ∀ t : Finset I, a ∉ t → p t → p (insert a t) := by
         intro a _ _ _
         by_cases h : f a
-
-        · simp [p]
-          tauto
-
-        · simp [p]
-          tauto
+        all_goals simp [p] ; tauto
 
       exact Finset.induction_on F empty insert
 
